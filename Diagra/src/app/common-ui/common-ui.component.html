@@ -1,0 +1,34 @@
+<div>
+  <mat-toolbar color="primary">
+    <mat-toolbar-row>
+      <h1>Diagra</h1>
+      <button mat-icon-button (click)="sidenav.toggle()">
+        <mat-icon *ngIf="sidenav.opened">menu</mat-icon>
+        <mat-icon *ngIf="!sidenav.opened">menu_open</mat-icon>
+      </button>
+      <div *ngIf="!auth.authorized()" style="margin-left: auto">
+        <a id="signInButton" mat-button (click)="onSignInBtnClick()"> Sign In </a>
+        <a id="signUpButton" mat-button (click)="onSignUpBtnClick()"> Sign Up </a>
+      </div>
+      <div *ngIf="auth.authorized()">
+        <a mat-button (click)="authorized = false"> Sign Out </a>
+      </div>
+    </mat-toolbar-row>
+  </mat-toolbar>
+
+  <mat-sidenav-container class="container" hasBackdrop="false">
+    <mat-sidenav #sidenav>
+      <mat-nav-list>
+        <a mat-list-item [routerLink]="'/home'"> Home </a>
+        <a mat-list-item [routerLink]="'/documents'"> Documents </a>
+        <a *ngIf="authorized" mat-list-item [routerLink]="'/account'"> Account </a>
+        <a mat-list-item [routerLink]="'/help'"> Help center </a>
+      </mat-nav-list>
+    </mat-sidenav>
+    <mat-sidenav-content>
+      <div>
+        <!--        <router-outlet name="/home"></router-outlet>-->
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

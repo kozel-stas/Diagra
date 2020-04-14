@@ -1,0 +1,28 @@
+.mat-dialog-container {
+  padding: 0 !important;
+}
+
+.mat-form-field {
+  width: 100%;
+  min-width: 300px;
+}
+
+
+mat-card-title,
+mat-card-content {
+  width: 20vw;
+  display: flex;
+  justify-content: center;
+}
+
+.error {
+  padding: 16px;
+  width: 300px;
+  color: white;
+  background-color: red;
+}
+
+.button {
+  display: flex;
+  justify-content: flex-end;
+}
