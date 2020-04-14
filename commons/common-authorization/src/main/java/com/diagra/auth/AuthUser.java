@@ -11,11 +11,20 @@ import java.util.List;
 
 public class AuthUser extends User {
 
+    public static final String USER_ID_KEY = "user_id";
+
+    private final String id;
+
     public AuthUser(UserEntity userEntity) {
         super(userEntity.getUserName(), userEntity.getPassword(), getGrantedAuthorities(userEntity));
+        this.id = userEntity.getId();
     }
 
-    public static List<GrantedAuthority> getGrantedAuthorities(UserEntity userEntity) {
+    public String getId() {
+        return id;
+    }
+
+    private static List<GrantedAuthority> getGrantedAuthorities(UserEntity userEntity) {
         List<GrantedAuthority> res = new ArrayList<>();
         for (UserRoles role : userEntity.getRoles()) {
             res.add(new SimpleGrantedAuthority(role.name().toLowerCase()));

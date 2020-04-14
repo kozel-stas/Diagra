@@ -7,8 +7,8 @@ import java.util.function.Function;
 
 public class BaseManagerImpl<K, V> implements BaseManager<K, V> {
 
-    private final MongoRepository<V, K> repository;
-    private final Function<K, Example<V>> matcher;
+    protected final MongoRepository<V, K> repository;
+    protected final Function<K, Example<V>> matcher;
 
     public BaseManagerImpl(MongoRepository<V, K> repository, Function<K, Example<V>> matcher) {
         this.repository = repository;

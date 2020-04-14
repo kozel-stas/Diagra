@@ -1,21 +1,25 @@
 package com.diagra.auth;
 
+import com.google.common.collect.ImmutableMap;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 
 import java.security.KeyPair;
+import java.util.HashMap;
 
 @Configuration
 @EnableAuthorizationServer
@@ -47,7 +51,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
     @Bean
     public JwtAccessTokenConverter tokenEnhancer() {
-        JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+        CustomTokenEnhancer converter = new CustomTokenEnhancer();
         converter.setKeyPair(keyPair);
         return converter;
     }
@@ -74,6 +78,24 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
                 .authorizedGrantTypes("password", "refresh_token").accessTokenValiditySeconds(accessTokenSeconds)
                 .refreshTokenValiditySeconds(refreshTokenSeconds);
 
+    }
+
+    private static class CustomTokenEnhancer extends JwtAccessTokenConverter {
+
+        @Override
+        public OAuth2AccessToken enhance(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
+            if (authentication.getPrincipal() instanceof AuthUser && accessToken instanceof DefaultOAuth2AccessToken) {
+                AuthUser authUser = (AuthUser) authentication.getPrincipal();
+                ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(
+                        new HashMap<String, Object>() {{
+                            putAll(accessToken.getAdditionalInformation());
+                            put(AuthUser.USER_ID_KEY, authUser.getId());
+                        }}
+                );
+                return super.enhance(accessToken, authentication);
+            }
+            throw new IllegalStateException(String.format("Token access forbidden.", accessToken, authentication));
+        }
     }
 
 }

@@ -29,6 +29,9 @@ public class UserEntity {
     @Field
     private List<UserRoles> roles;
 
+    public UserEntity() {
+    }
+
     public UserEntity(String email, String userName, String password, List<UserRoles> roles) {
         this(null, email, userName, password, roles);
     }

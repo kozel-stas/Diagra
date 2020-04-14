@@ -3,7 +3,6 @@ package com.diagra.dao;
 import com.diagra.dao.manager.BaseManager;
 import com.diagra.dao.manager.BaseManagerImpl;
 import com.diagra.dao.model.UserEntity;
-import com.diagra.dao.model.UserRoles;
 import com.google.common.collect.ImmutableList;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
