@@ -1,6 +1,7 @@
 import {Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation} from '@angular/core';
 import {MatDialogRef} from '@angular/material/dialog';
 import {FormControl, FormGroup} from "@angular/forms";
+import {AuthService} from "../services/auth.service";
 
 @Component({
   selector: 'app-sign-in',
@@ -17,7 +18,7 @@ export class SignInComponent implements OnInit {
 
   submit() {
     if (this.form.valid) {
-      this.submitEM.emit(this.form.value);
+      this.authService.loginUser(null, null);
     }
   }
 
@@ -28,7 +29,7 @@ export class SignInComponent implements OnInit {
   ngOnInit(): void {
   }
 
-  constructor(public dialogRef: MatDialogRef<SignInComponent>) {
+  constructor(public dialogRef: MatDialogRef<SignInComponent>, private authService: AuthService) {
   }
 
   onClose() {

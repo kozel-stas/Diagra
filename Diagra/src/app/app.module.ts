@@ -24,6 +24,7 @@ import {SignUpComponent} from './sign-up/sign-up.component';
 import {MatDialogModule, MatDialogRef} from "@angular/material/dialog";
 import {MatCardModule} from "@angular/material/card";
 import {ReactiveFormsModule} from "@angular/forms";
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
   declarations: [
@@ -52,7 +53,8 @@ import {ReactiveFormsModule} from "@angular/forms";
     MatListModule,
     BrowserAnimationsModule,
     MatCardModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    HttpClientModule
   ],
   providers: [{ provide: MatDialogRef, useValue: {} }],
   bootstrap: [AppComponent]

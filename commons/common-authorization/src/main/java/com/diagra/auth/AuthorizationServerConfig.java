@@ -1,29 +1,35 @@
 package com.diagra.auth;
 
-import com.google.common.collect.ImmutableMap;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
-import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
+import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerEndpointsConfiguration;
+import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerSecurityConfiguration;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.security.KeyPair;
 import java.util.HashMap;
 
 @Configuration
-@EnableAuthorizationServer
+@Import({AuthorizationServerEndpointsConfiguration.class, AuthorizationServerConfig.AuthorizationServerWebSecurity.class})
 @PropertySource("classpath:application-auth.properties")
+@SpringBootApplication
 public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
 
     private final int accessTokenSeconds;
@@ -31,6 +37,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     private final String clientId;
     private final String clientSecret;
     private final AuthenticationManager authenticationManager;
+    private final CorsConfigurationSource corsConfigurationSource;
     private final KeyPair keyPair;
 
     public AuthorizationServerConfig(
@@ -39,6 +46,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
             @Value("${clientId}") String clientId,
             @Value("${clientSecret}") String clientSecret,
             @Qualifier("authenticationManagerBean") AuthenticationManager authenticationManager,
+            CorsConfigurationSource corsConfigurationSource,
             KeyPair keyPair
     ) {
         this.accessTokenSeconds = accessTokenSeconds;
@@ -46,6 +54,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.authenticationManager = authenticationManager;
+        this.corsConfigurationSource = corsConfigurationSource;
         this.keyPair = keyPair;
     }
 
@@ -65,6 +74,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         endpoints.authenticationManager(authenticationManager).tokenStore(tokenStore(tokenEnhancer()))
                 .accessTokenConverter(tokenEnhancer());
+        endpoints.getFrameworkEndpointHandlerMapping().setCorsConfigurationSource(corsConfigurationSource);
     }
 
     @Override
@@ -96,6 +106,25 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
             }
             throw new IllegalStateException(String.format("Token access forbidden.", accessToken, authentication));
         }
+    }
+
+    @Configuration
+    public static class AuthorizationServerWebSecurity extends AuthorizationServerSecurityConfiguration {
+
+        private final CorsConfigurationSource corsConfigurationSource;
+
+        public AuthorizationServerWebSecurity(CorsConfigurationSource corsConfigurationSource) {
+            this.corsConfigurationSource = corsConfigurationSource;
+        }
+
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
+            http.cors().configurationSource(corsConfigurationSource)
+                    .and()
+                    .authorizeRequests().antMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+            super.configure(http);
+        }
+
     }
 
 }

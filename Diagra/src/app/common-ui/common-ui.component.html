@@ -6,11 +6,11 @@
         <mat-icon *ngIf="sidenav.opened">menu</mat-icon>
         <mat-icon *ngIf="!sidenav.opened">menu_open</mat-icon>
       </button>
-      <div *ngIf="!auth.authorized()" style="margin-left: auto">
+      <div *ngIf="!auth.isAuthorized()" style="margin-left: auto">
         <a id="signInButton" mat-button (click)="onSignInBtnClick()"> Sign In </a>
         <a id="signUpButton" mat-button (click)="onSignUpBtnClick()"> Sign Up </a>
       </div>
-      <div *ngIf="auth.authorized()">
+      <div *ngIf="auth.isAuthorized()">
         <a mat-button (click)="authorized = false"> Sign Out </a>
       </div>
     </mat-toolbar-row>
@@ -21,7 +21,7 @@
       <mat-nav-list>
         <a mat-list-item [routerLink]="'/home'"> Home </a>
         <a mat-list-item [routerLink]="'/documents'"> Documents </a>
-        <a *ngIf="authorized" mat-list-item [routerLink]="'/account'"> Account </a>
+        <a *ngIf="auth.isAuthorized()" mat-list-item [routerLink]="'/account'"> Account </a>
         <a mat-list-item [routerLink]="'/help'"> Help center </a>
       </mat-nav-list>
     </mat-sidenav>

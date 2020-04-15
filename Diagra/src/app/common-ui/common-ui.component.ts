@@ -14,12 +14,11 @@ export class CommonUiComponent implements OnInit {
 
   authorized = false;
 
-
   constructor(
     private route: ActivatedRoute,
     private dialog: MatDialog,
     private router: Router,
-    private auth: AuthService
+    public auth: AuthService
   ) {
   }
 
