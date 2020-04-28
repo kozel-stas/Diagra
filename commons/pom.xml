@@ -16,6 +16,8 @@
         <module>common-dao</module>
         <module>common-authorization</module>
         <module>common-logic</module>
+        <module>common-antlr</module>
+        <module>common-xml</module>
     </modules>
 
 </project>

@@ -7,20 +7,24 @@
         <groupId>com.diagra</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <packaging>jar</packaging>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>common-logic</artifactId>
+    <artifactId>import-export</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-core</artifactId>
-            <version>5.3.1.RELEASE</version>
+            <groupId>com.diagra</groupId>
+            <artifactId>common-antlr</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jgrapht</groupId>
+            <artifactId>jgrapht-core</artifactId>
+            <version>1.4.0</version>
         </dependency>
         <dependency>
             <groupId>com.diagra</groupId>
-            <artifactId>common-dao</artifactId>
+            <artifactId>common-xml</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>

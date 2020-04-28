@@ -11,6 +11,7 @@
     <modules>
         <module>commons</module>
         <module>DiagraServer</module>
+        <module>import-export</module>
     </modules>
 
     <parent>
