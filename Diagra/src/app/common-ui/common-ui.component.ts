@@ -10,9 +10,7 @@ import {AuthService} from "../services/auth.service";
   templateUrl: './common-ui.component.html',
   styleUrls: ['./common-ui.component.scss'],
 })
-export class CommonUiComponent implements OnInit {
-
-  authorized = false;
+export class CommonUiComponent implements OnInit {ё
 
   constructor(
     private route: ActivatedRoute,

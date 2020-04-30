@@ -24,7 +24,12 @@ import {SignUpComponent} from './sign-up/sign-up.component';
 import {MatDialogModule, MatDialogRef} from "@angular/material/dialog";
 import {MatCardModule} from "@angular/material/card";
 import {ReactiveFormsModule} from "@angular/forms";
-import { HttpClientModule } from '@angular/common/http';
+import {HttpClientModule} from '@angular/common/http';
+import {GraphComponent} from './graph/graph.component';
+import {CodeComponent} from './code/code.component';
+import {CodeEditorModule} from '@ngstack/code-editor';
+import {NgxResizableModule} from '@3dgenomes/ngx-resizable';
+import {UnionComponent} from './union/union.component';
 
 @NgModule({
   declarations: [
@@ -32,7 +37,10 @@ import { HttpClientModule } from '@angular/common/http';
     ComponentComponent,
     CommonUiComponent,
     SignInComponent,
-    SignUpComponent
+    SignUpComponent,
+    GraphComponent,
+    CodeComponent,
+    UnionComponent,
   ],
   imports: [
     BrowserModule,
@@ -54,9 +62,11 @@ import { HttpClientModule } from '@angular/common/http';
     BrowserAnimationsModule,
     MatCardModule,
     ReactiveFormsModule,
-    HttpClientModule
+    HttpClientModule,
+    NgxResizableModule,
+    CodeEditorModule.forRoot()
   ],
-  providers: [{ provide: MatDialogRef, useValue: {} }],
+  providers: [{provide: MatDialogRef, useValue: {}}],
   bootstrap: [AppComponent]
 })
 export class AppModule {

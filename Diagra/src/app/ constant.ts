@@ -1,5 +1,8 @@
+import {EventMgr} from "./services/EventMgr";
 
-export class Constant  {
+export class Constant {
+
+  public static EVENT_MGR: EventMgr = new EventMgr();
 
   public static API_URL = 'http://localhost:8080';
   public static REFRESH_TOKEN = 'refresh_token';

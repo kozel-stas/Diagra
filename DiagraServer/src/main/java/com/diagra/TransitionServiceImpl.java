@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -16,6 +17,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.UserDefinedFileAttributeView;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +27,7 @@ public class TransitionServiceImpl implements TransitionService {
 
     private static final Logger LOG = LogManager.getLogger(TransitionServiceImpl.class);
     private static final String MEDIA_TYPE = "media-type";
+    private static final String OWNER = "owner";
 
     private final File dir;
 
@@ -37,16 +40,23 @@ public class TransitionServiceImpl implements TransitionService {
     }
 
     @Override
-    public Resource load(String transitionLink) {
+    public Resource load(String transitionLink, String ownerID) {
         UUID.fromString(transitionLink);
         File file = new File(dir.getAbsolutePath() + "/" + transitionLink + ".srv");
         if (file.exists()) {
             try {
                 UserDefinedFileAttributeView attr = Files.getFileAttributeView(file.toPath(), UserDefinedFileAttributeView.class);
-                ByteBuffer byteBuffer = ByteBuffer.allocate(attr.size(MEDIA_TYPE));
-                attr.read(MEDIA_TYPE, byteBuffer);
-                MediaType mediaType = MediaType.parseMediaType(new String(byteBuffer.array()));
+                ByteBuffer mediaTypeBuffer = ByteBuffer.allocate(attr.size(MEDIA_TYPE));
+                attr.read(MEDIA_TYPE, mediaTypeBuffer);
+                ByteBuffer owner = ByteBuffer.allocate(attr.size(OWNER));
+                attr.read(OWNER, owner);
+                if (!Arrays.equals(owner.array(), ownerID.getBytes())) {
+                    LOG.warn("Transition cross user access denied. {}, {}", ownerID, new String(owner.array()));
+                    throw new AccessDeniedException("Cross-user transition link.");
+                }
+                MediaType mediaType = MediaType.parseMediaType(new String(mediaTypeBuffer.array()));
                 return new Resource(
+                        ownerID,
                         mediaType,
                         new FileSystemResource(file)
                 );
@@ -54,7 +64,7 @@ public class TransitionServiceImpl implements TransitionService {
                 LOG.error(e);
                 return null;
             } finally {
-                file.delete();
+                file.deleteOnExit();
             }
         }
         return null;
@@ -69,6 +79,7 @@ public class TransitionServiceImpl implements TransitionService {
             fileOutputStream.write(IOUtils.toByteArray(resource.getResource().getInputStream()));
             UserDefinedFileAttributeView attr = Files.getFileAttributeView(file.toPath(), UserDefinedFileAttributeView.class);
             attr.write(MEDIA_TYPE, ByteBuffer.wrap(resource.getMediaType().toString().getBytes()));
+            attr.write(OWNER, ByteBuffer.wrap(resource.getOwnerID().getBytes()));
             return filename;
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -99,9 +110,9 @@ public class TransitionServiceImpl implements TransitionService {
                     try {
                         BasicFileAttributes attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
                         if (attr.creationTime().toMillis() + TimeUnit.MINUTES.toMillis(20) < System.currentTimeMillis()) {
-                            file.delete();
+                            Files.delete(file.toPath());
                         }
-                    } catch (IOException e) {
+                    } catch (IOException | RuntimeException e) {
                         LOG.error(e);
                     }
                 }

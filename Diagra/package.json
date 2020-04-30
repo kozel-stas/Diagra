@@ -11,6 +11,7 @@
   },
   "private": true,
   "dependencies": {
+    "@3dgenomes/ngx-resizable": "^1.8.1",
     "@angular/animations": "^9.1.1",
     "@angular/cdk": "github:angular/cdk-builds",
     "@angular/common": "~9.1.0",
@@ -21,7 +22,9 @@
     "@angular/platform-browser": "~9.1.0",
     "@angular/platform-browser-dynamic": "~9.1.0",
     "@angular/router": "~9.1.0",
+    "@ngstack/code-editor": "^1.0.0",
     "@types/mxgraph": "github:lgleim/mxgraph-typings",
+    "angular-code-input": "^1.1.0",
     "rxjs": "~6.5.4",
     "ts-mxgraph": "^1.0.0",
     "ts-mxgraph-factory": "^4.0.8-rc1",

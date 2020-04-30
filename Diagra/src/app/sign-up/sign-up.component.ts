@@ -1,6 +1,9 @@
 import {Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation} from '@angular/core';
-import {FormControl, FormGroup} from "@angular/forms";
+import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {MatDialogRef} from "@angular/material/dialog";
+import {UserService} from "../services/user.service";
+import {Constant} from "../ constant";
+import {EventListener} from "../services/EventMgr";
 
 @Component({
   selector: 'app-sign-up',
@@ -11,14 +14,18 @@ import {MatDialogRef} from "@angular/material/dialog";
 export class SignUpComponent implements OnInit {
 
   form: FormGroup = new FormGroup({
-    username: new FormControl(''),
-    password: new FormControl(''),
-    email: new FormControl(''),
+    username: new FormControl('', [Validators.required]),
+    password: new FormControl('', [Validators.required]),
+    email: new FormControl('', [Validators.required, Validators.email]),
   });
+
+  username: string;
+  password: string;
+  email: string;
 
   submit() {
     if (this.form.valid) {
-      this.submitEM.emit(this.form.value);
+      this.userService.createUser(this.username, this.email, this.password);
     }
   }
 
@@ -29,7 +36,12 @@ export class SignUpComponent implements OnInit {
   ngOnInit(): void {
   }
 
-  constructor(public dialogRef: MatDialogRef<SignUpComponent>) {
+  constructor(public dialogRef: MatDialogRef<SignUpComponent>, private userService: UserService) {
+    Constant.EVENT_MGR.subscribe("login", <EventListener>{
+      fireEvent: (obj) => {
+        this.onClose();
+      }
+    })
   }
 
   onClose() {

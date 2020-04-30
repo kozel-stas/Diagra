@@ -1,8 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {mxgraph, mxgraphFactory} from "ts-mxgraph";
 
-declare var require: any;
-
 @Component({
   selector: 'app-component',
   templateUrl: './component.component.html',

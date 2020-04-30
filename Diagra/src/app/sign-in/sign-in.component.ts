@@ -1,7 +1,10 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation} from '@angular/core';
+import {Component, EventEmitter, OnInit, Output, ViewEncapsulation} from '@angular/core';
 import {MatDialogRef} from '@angular/material/dialog';
-import {FormControl, FormGroup} from "@angular/forms";
+import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {AuthService} from "../services/auth.service";
+import {Constant} from "../ constant";
+import {EventListener} from "../services/EventMgr";
+import {UserService} from "../services/user.service";
 
 @Component({
   selector: 'app-sign-in',
@@ -12,24 +15,31 @@ import {AuthService} from "../services/auth.service";
 export class SignInComponent implements OnInit {
 
   form: FormGroup = new FormGroup({
-    username: new FormControl(''),
-    password: new FormControl(''),
+    username: new FormControl('', [Validators.required]),
+    password: new FormControl('', [Validators.required]),
   });
+
+  username: String;
+  password: String;
 
   submit() {
     if (this.form.valid) {
-      this.authService.loginUser(null, null);
+      this.authService.loginUser(this.username, this.password);
     }
   }
-
-  @Input() error: string | null;
 
   @Output() submitEM = new EventEmitter();
 
   ngOnInit(): void {
   }
 
-  constructor(public dialogRef: MatDialogRef<SignInComponent>, private authService: AuthService) {
+  constructor(public dialogRef: MatDialogRef<SignInComponent>, private authService: AuthService, private userService: UserService) {
+    Constant.EVENT_MGR.subscribe("login", <EventListener>{
+      fireEvent: (obj) => {
+        userService.getUser().subscribe((data) => console.log(data));
+        this.onClose();
+      }
+    })
   }
 
   onClose() {
