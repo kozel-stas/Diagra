@@ -94,7 +94,7 @@ public class MXGraphXmlConverter implements ConverterService {
 
     private enum MxGraphProperty {
 
-        DECISION(40, 40, "geometry", "shape=rhombus", BlockType.DECISION),
+        DECISION(100, 100, "geometry", "shape=rhombus", BlockType.DECISION),
         PROCESS(100, 40, "geometry", "", BlockType.PROCESS),
         PREDEFINED_PROCESS(100, 60, "geometry", "shape=process", BlockType.PREDEFINED_PROCESS),
         CONNECTOR(40, 40, "geometry", "shape=ellipse", BlockType.CONNECTOR),

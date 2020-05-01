@@ -7,6 +7,8 @@ import com.diagra.model.AlgorithmScheme;
 import com.diagra.model.AlgorithmSchemeBuilder;
 import com.diagra.model.Block;
 import com.diagra.model.Edge;
+import org.antlr.v4.runtime.RuleContext;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,7 +23,7 @@ public class SchemeGenerator extends JavaParserBaseListener {
     private final SchemeVisitor schemeVisitor = new SchemeVisitor();
     private AlgorithmSchemeBuilder currentMethodBuilder;
 
-    private AlgorithmScheme generatedSheme;
+    private AlgorithmScheme generatedSchema;
 
     //<editor-fold desc="method">
 
@@ -76,11 +78,6 @@ public class SchemeGenerator extends JavaParserBaseListener {
     //<editor-fold desc="body">
 
     @Override
-    public void enterBlockStatement(JavaParser.BlockStatementContext ctx) {
-
-    }
-
-    @Override
     public void enterLocalVariableDeclaration(JavaParser.LocalVariableDeclarationContext ctx) {
         if (subState(ParseState.METHOD_BODY)) {
             String text = ctx.accept(schemeVisitor);
@@ -90,31 +87,23 @@ public class SchemeGenerator extends JavaParserBaseListener {
     }
 
     @Override
-    public void enterMethodCall(JavaParser.MethodCallContext ctx) {
-        if (subState(ParseState.METHOD_BODY)) {
-            super.enterMethodCall(ctx);
-        }
-    }
-
-    @Override
     public void enterStatement(JavaParser.StatementContext ctx) {
         if (subState(ParseState.METHOD_BODY)) {
             if (ctx.IF() != null) {
                 changeState(ParseState.IF);
+                if (ctx.ELSE() != null) {
+                    changeState(ParseState.ELSE_BLOCK);
+                    LOG.debug("ELSE {} in method {} detected.", ctx.parExpression().getText(), currentMethodBuilder.getName());
+                }
                 changeState(ParseState.IF_BLOCK);
                 LOG.debug("IF {} in method {} parsing was started.", ctx.parExpression().getText(), currentMethodBuilder.getName());
-                currentMethodBuilder.decision(ctx.parExpression().accept(schemeVisitor));
+                currentMethodBuilder.decision(ctx.parExpression().expression().accept(schemeVisitor));
                 currentMethodBuilder.decisionBlock("true");
             }
-            if (ctx.ELSE() != null) {
-                changeState(ParseState.ELSE_BLOCK);
-                LOG.debug("ELSE {} in method {} parsing was started.", ctx.parExpression().getText(), currentMethodBuilder.getName());
-                currentMethodBuilder.decisionBlock("false");
-            }
             if (ctx.SWITCH() != null) {
-                changeState(ParseState.SWITCH_STATEMENT);
+                changeState(ParseState.SWITCH);
+                currentMethodBuilder.decision(ctx.parExpression().expression().accept(schemeVisitor));
                 LOG.debug("SWITCH {} in method {} parsing was started.", ctx.parExpression().getText(), currentMethodBuilder.getName());
-                currentMethodBuilder.decision(ctx.parExpression().accept(schemeVisitor));
             }
             if (ctx.expression() != null && !ctx.expression().isEmpty()) {
                 for (JavaParser.ExpressionContext expressionContext : ctx.expression()) {
@@ -134,27 +123,82 @@ public class SchemeGenerator extends JavaParserBaseListener {
     @Override
     public void exitStatement(JavaParser.StatementContext ctx) {
         if (subState(ParseState.METHOD_BODY)) {
+            processIfStatement(ctx.getText());
             if (ctx.IF() != null) {
+                if (ctx.ELSE() != null) {
+                    removeUntil(ParseState.ELSE_BLOCK);
+                    currentMethodBuilder.endDecisionBlock();
+                    LOG.debug("ELSE {} in method {} parsing was ended.", ctx.parExpression().getText(), currentMethodBuilder.getName());
+                } else {
+                    LOG.debug("ELSE was emulated in method {} .", currentMethodBuilder.getName());
+                    currentMethodBuilder.decisionBlock("false");
+                    currentMethodBuilder.endDecisionBlock();
+                }
                 LOG.debug("IF {} in method {} parsing was ended.", ctx.parExpression().getText(), currentMethodBuilder.getName());
-                removeUntil(ParseState.IF_BLOCK);
-                currentMethodBuilder.endDecisionBlock();
-            }
-            if (ctx.ELSE() != null) {
-                LOG.debug("ELSE {} in method {} parsing was ended.", ctx.parExpression().getText(), currentMethodBuilder.getName());
-                removeUntil(ParseState.ELSE_BLOCK);
                 removeUntil(ParseState.IF);
-                currentMethodBuilder.endDecisionBlock();
                 currentMethodBuilder.endDecision();
             }
             if (ctx.SWITCH() != null) {
                 LOG.debug("SWITCH {} in method {} parsing was ended.", ctx.parExpression().getText(), currentMethodBuilder.getName());
-                removeUntil(ParseState.SWITCH_STATEMENT);
+                removeUntil(ParseState.SWITCH);
                 currentMethodBuilder.endDecision();
             }
         }
     }
 
+    @Override
+    public void enterSwitchBlockStatementGroup(JavaParser.SwitchBlockStatementGroupContext ctx) {
+        if (subState(ParseState.METHOD)) {
+            changeState(ParseState.SWITCH_BLOCK);
+        }
+    }
+
+    @Override
+    public void exitSwitchBlockStatementGroup(JavaParser.SwitchBlockStatementGroupContext ctx) {
+        if (subState(ParseState.METHOD)) {
+            removeUntil(ParseState.SWITCH_BLOCK);
+            JavaParser.BlockStatementContext blockStatementContext = ctx.blockStatement(ctx.blockStatement().size() - 1);
+            boolean casted = blockStatementContext != null && blockStatementContext.statement() != null && blockStatementContext.statement().BREAK() == null;
+            if (!casted) {
+                currentMethodBuilder.endDecisionBlock();
+            } else {
+                LOG.debug("SWITCH {} in method {} have casted block.", ctx.getText(), currentMethodBuilder.getName());
+                currentMethodBuilder.endDecisionBlockCast();
+            }
+        }
+    }
+
+    @Override
+    public void enterSwitchLabel(JavaParser.SwitchLabelContext ctx) {
+        if (subState(ParseState.METHOD)) {
+            ParseTree data;
+            if (ctx.IDENTIFIER() != null) {
+                data = ctx.IDENTIFIER();
+            } else if (ctx.DEFAULT() != null) {
+                data = ctx.DEFAULT();
+            } else {
+                data = ctx.expression();
+            }
+            currentMethodBuilder.decisionBlock(data.accept(schemeVisitor));
+            if (state() != ParseState.SWITCH_BLOCK) {
+                LOG.debug("SWITCH {} in method {} have casted block.", ctx.getText(), currentMethodBuilder.getName());
+                currentMethodBuilder.endDecisionBlockCast();
+            }
+        }
+    }
+
     //</editor-fold>
+
+    private void processIfStatement(String text) {
+        if (state() == ParseState.IF_BLOCK) {
+            removeUntil(ParseState.IF_BLOCK);
+            currentMethodBuilder.endDecisionBlock();
+            if (state() == ParseState.ELSE_BLOCK) {
+                LOG.debug("ELSE {} in method {} parsing was started.", text, currentMethodBuilder.getName());
+                currentMethodBuilder.decisionBlock("false");
+            }
+        }
+    }
 
     @Override
     public void exitCompilationUnit(JavaParser.CompilationUnitContext ctx) {
@@ -167,11 +211,11 @@ public class SchemeGenerator extends JavaParserBaseListener {
             edges.addAll(algorithmScheme.getEdges());
             name = algorithmScheme.getName();
         }
-        generatedSheme = new AlgorithmScheme(name, blocks, edges);
+        generatedSchema = new AlgorithmScheme(name, blocks, edges);
     }
 
     public AlgorithmScheme getScheme() {
-        return generatedSheme;
+        return generatedSchema;
     }
 
     //<editor-fold desc="utils">
@@ -182,15 +226,16 @@ public class SchemeGenerator extends JavaParserBaseListener {
             ParseState state = iterator.next();
             if (state == parseState) {
                 iterator.remove();
-                break;
+                LOG.debug("Current parse state {}.", states.peekLast());
+                return;
             }
-            if (state == ParseState.IF) {
-                LOG.debug("State IF recovered.");
-                currentMethodBuilder.endDecision();
+            if (state == ParseState.IF_BLOCK || state == ParseState.ELSE_BLOCK) {
+                LOG.debug("State {} recovered.", state);
+                currentMethodBuilder.endDecisionBlock();
             }
             iterator.remove();
         }
-        LOG.debug("Current parse state {}.", states.peekLast());
+        throw new IEException("Inconsistent state of parser.");
     }
 
     private void changeState(ParseState parseState) {
@@ -212,8 +257,8 @@ public class SchemeGenerator extends JavaParserBaseListener {
         IF,
         IF_BLOCK,
         ELSE_BLOCK,
-        SWITCH_STATEMENT,
-        SWITCH_CASE_BLOCK,
+        SWITCH,
+        SWITCH_BLOCK,
         CYCLE_STATEMENT,
         ;
     }
