@@ -1,5 +1,6 @@
 package com.diagra.source.java;
 
+import com.diagra.java.JavaParser;
 import com.diagra.java.JavaParserBaseVisitor;
 import com.google.common.collect.ImmutableSet;
 import org.antlr.v4.runtime.RuleContext;
@@ -18,6 +19,16 @@ public class SchemeVisitor extends JavaParserBaseVisitor<String> {
     private final Set<Integer> ignoreSpaceRule = ImmutableSet.of(
             80, 92, 81
     );
+
+    @Override
+    public String visitVariableModifier(JavaParser.VariableModifierContext ctx) {
+        return "";
+    }
+
+    @Override
+    public String visitParExpression(JavaParser.ParExpressionContext ctx) {
+        return visit(ctx.expression());
+    }
 
     @Override
     public String visitChildren(RuleNode node) {

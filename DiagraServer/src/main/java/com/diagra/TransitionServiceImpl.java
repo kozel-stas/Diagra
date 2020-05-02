@@ -72,10 +72,9 @@ public class TransitionServiceImpl implements TransitionService {
 
     @Override
     public String generateTransitionLink(Resource resource) {
-        try {
-            String filename = UUID.randomUUID().toString();
-            File file = new File(dir.getAbsolutePath() + "/" + filename + ".srv");
-            FileOutputStream fileOutputStream = new FileOutputStream(file);
+        String filename = UUID.randomUUID().toString();
+        File file = new File(dir.getAbsolutePath() + "/" + filename + ".srv");
+        try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
             fileOutputStream.write(IOUtils.toByteArray(resource.getResource().getInputStream()));
             UserDefinedFileAttributeView attr = Files.getFileAttributeView(file.toPath(), UserDefinedFileAttributeView.class);
             attr.write(MEDIA_TYPE, ByteBuffer.wrap(resource.getMediaType().toString().getBytes()));

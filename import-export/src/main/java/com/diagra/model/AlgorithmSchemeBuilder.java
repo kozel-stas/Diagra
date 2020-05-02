@@ -3,18 +3,27 @@ package com.diagra.model;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
+import javax.annotation.Nullable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class AlgorithmSchemeBuilder {
 
     private static final List<String> TMP_CONNECTOR = ImmutableList.of("T", "M", "P", "D");
+    public static final List<String> START_TERMINATOR = Collections.singletonList("Start");
+    public static final List<String> END_TERMINATOR = Collections.singletonList("End");
 
     private final String name;
     private final LinkedList<Block> blocks = new LinkedList<>();
     private final LinkedList<Edge> edges = new LinkedList<>();
+    private final Block start = new BaseBlock(BlockType.TERMINATOR, START_TERMINATOR);
+    private final Block end = new BaseBlock(BlockType.TERMINATOR, END_TERMINATOR);
 
     private final LinkedList<Block> decisions = new LinkedList<>();
     private final Map<Block, DecisionBlockInfo> decisionBlockInfo = new HashMap<>();
+
+    private final LinkedList<Block> cycles = new LinkedList<>();
+    private final Map<Block, Block> pointAfterCycle = new HashMap<>();
 
     private final class DecisionBlockInfo {
 
@@ -41,7 +50,10 @@ public class AlgorithmSchemeBuilder {
 
         public void endBlock() {
             emulateBlock();
-            lastPoints.add(lastPointInCurrentBlock);
+            boolean gotoConnects = lastPointInCurrentBlock == end || pointAfterCycle.containsKey(lastPointInCurrentBlock) || pointAfterCycle.containsValue(lastPointInCurrentBlock);
+            if (!gotoConnects) {
+                lastPoints.add(lastPointInCurrentBlock);
+            }
             lastPointInCurrentBlock = null;
             lastBlockName = null;
         }
@@ -83,8 +95,55 @@ public class AlgorithmSchemeBuilder {
 
     public static AlgorithmSchemeBuilder builder(String name) {
         AlgorithmSchemeBuilder builder = new AlgorithmSchemeBuilder(name);
-        builder.blocks.addLast(new BaseBlock(BlockType.TERMINATOR, Collections.singletonList("Start")));
+        builder.blocks.addLast(builder.start);
         return builder;
+    }
+
+    public static AlgorithmSchemeBuilder builder(@Nullable AlgorithmScheme main, AlgorithmScheme... sub) {
+        if (main == null) {
+            List<Block> blocks = new ArrayList<>();
+            List<Edge> edges = new ArrayList<>();
+            String name = "";
+            for (AlgorithmScheme value : sub) {
+                blocks.addAll(value.getBlocks());
+                edges.addAll(value.getEdges());
+                name = value.getName();
+            }
+            AlgorithmSchemeBuilder algorithmSchemeBuilder = new AlgorithmSchemeBuilder(name);
+            algorithmSchemeBuilder.blocks.addAll(blocks);
+            algorithmSchemeBuilder.edges.addAll(edges);
+            return algorithmSchemeBuilder;
+        } else {
+            AlgorithmSchemeBuilder builder = new AlgorithmSchemeBuilder(main.getName());
+            Map<String, AlgorithmScheme> methods = Arrays.stream(sub).collect(Collectors.toMap(AlgorithmScheme::getName, v -> v));
+            for (AlgorithmScheme o : ImmutableList.<AlgorithmScheme>builder().add(main).addAll(Arrays.asList(sub)).build()) {
+                List<Block> blocks = new LinkedList<>();
+                List<Edge> edges = new LinkedList<>(o.getEdges());
+                for (Block block : o.getBlocks()) {
+                    boolean function = block.blockType() == BlockType.PREDEFINED_PROCESS && block.commands().size() == 1 && methods.get(block.commands().get(0)) != null;
+                    if (function) {
+                        AlgorithmScheme algorithmScheme = methods.get(o.getName());
+                        for (Edge edge : algorithmScheme.getEdges()) {
+                            if (edge.source().blockType() == BlockType.TERMINATOR && START_TERMINATOR.equals(edge.source().commands())) {
+//                                edges.add(new BaseEdge(EdgeType.LINE, edge.text(), ));
+                            }
+                            if (edge.source().blockType() == BlockType.TERMINATOR && END_TERMINATOR.equals(edge.source().commands())) {
+
+                            }
+                        }
+                        continue;
+                    }
+//                    if (o != main && block.blockType() == BlockType.TERMINATOR) {
+//                        edges.removeIf(edge -> edge.target() == block || edge.source() == block);
+//                        continue;
+//                    }
+                    blocks.add(block);
+                }
+                builder.blocks.addAll(blocks);
+                builder.edges.addAll(edges);
+            }
+            return builder;
+        }
     }
 
     public String getName() {
@@ -129,6 +188,14 @@ public class AlgorithmSchemeBuilder {
         blocks.addLast(decision);
     }
 
+    public void terminate() {
+        Block connect = peekForConnect();
+        if (connect == null) {
+            throw new IllegalStateException("No block for connect.");
+        }
+        addEdge(new BaseEdge(EdgeType.LINE, null, connect, end));
+    }
+
     public void endDecision() {
         Block decision = decisions.removeLast();
         if (decision == null) {
@@ -137,8 +204,8 @@ public class AlgorithmSchemeBuilder {
         DecisionBlockInfo info = decisionBlockInfo.get(decision);
         List<Block> list = info.getLastPoints();
         if (list.size() == 0) {
-            this.blocks.remove(decision);
-            edges.removeIf(edge -> edge.target() == decision);
+//            this.blocks.remove(decision);
+//            edges.removeIf(edge -> edge.target() == decision); //FIXME
             return;
         }
         Block tempConnector = new BaseBlock(BlockType.CONNECTOR, TMP_CONNECTOR); // Should be removed on build level.
@@ -172,13 +239,62 @@ public class AlgorithmSchemeBuilder {
         decisionBlockInfo.get(decision).castBlock();
     }
 
+    public void startCycle(String condition) {
+        Block cycle = new BaseBlock(BlockType.CYCLE_START, Collections.singletonList(condition));
+        Block connect = peekForConnect();
+        if (connect != null) {
+            addEdge(new BaseEdge(EdgeType.LINE, null, connect, cycle));
+        }
+        this.pointAfterCycle.put(cycle, new BaseBlock(BlockType.CONNECTOR, TMP_CONNECTOR));
+        this.cycles.addLast(cycle);
+        this.blocks.addLast(cycle);
+    }
+
+    public void endCycle() {
+        Block cycle = this.cycles.pollLast();
+        if (cycle == null) {
+            throw new IllegalStateException("Cycle block already ended.");
+        }
+        Block pointAfter = this.pointAfterCycle.remove(cycle);
+        Block cycleEnd = new BaseBlock(BlockType.CYCLE_END, cycle.commands());
+        Block connect = peekForConnect();
+        if (connect != null) {
+            addEdge(new BaseEdge(EdgeType.LINE, null, connect, cycleEnd));
+            addEdge(new BaseEdge(EdgeType.LINE, null, cycleEnd, pointAfter));
+        }
+        this.blocks.addLast(cycleEnd);
+        this.blocks.addLast(pointAfter);
+    }
+
+    public void toStartCycle() {
+        Block cycle = this.cycles.peekLast();
+        if (cycle == null) {
+            throw new IllegalStateException("Cycle block already ended.");
+        }
+        Block connect = peekForConnect();
+        if (connect != null) {
+            addEdge(new BaseEdge(EdgeType.LINE, null, connect, cycle));
+        }
+    }
+
+    public void exitCycle() {
+        Block cycle = this.cycles.peekLast();
+        if (cycle == null) {
+            throw new IllegalStateException("Cycle block already ended.");
+        }
+        Block afterPoint = this.pointAfterCycle.get(cycle);
+        Block connect = peekForConnect();
+        if (connect != null) {
+            addEdge(new BaseEdge(EdgeType.LINE, null, connect, afterPoint));
+        }
+    }
+
     public AlgorithmScheme build() {
         if (!decisions.isEmpty()) {
             throw new IllegalStateException("Decision wasn't ended correctly.");
         }
-        Block terminator = new BaseBlock(BlockType.TERMINATOR, Collections.singletonList("End"));
-        this.addEdge(new BaseEdge(EdgeType.LINE, null, peekForConnect(), terminator));
-        this.blocks.addLast(terminator);
+        this.addEdgeIfNotExists(new BaseEdge(EdgeType.LINE, null, peekForConnect(), end));
+        this.blocks.addLast(end);
         deleteInnerStructures();
         return new AlgorithmScheme(name, blocks, edges);
     }
@@ -221,10 +337,22 @@ public class AlgorithmSchemeBuilder {
                 edges.addLast(new BaseEdge(EdgeType.LINE, null, block, edge.target()));
             }
             Edge copy = new BaseEdge(edge.edgeType(), blockInfo.getLastBlockName(), edge.source(), edge.target());
-            edges.addLast(copy);
             blockInfo.setLastPointInCurrentBlock(edge.target());
+            edges.addLast(copy);
         } else {
             decisionBlockInfo.get(decisions.peekLast()).setLastPointInCurrentBlock(edge.target());
+            edges.addLast(edge);
+        }
+    }
+
+    private void addEdgeIfNotExists(Edge edge) {
+        if (edges
+                .stream()
+                .filter(value -> value.source() == edge.source())
+                .filter(value -> value.edgeType() == edge.edgeType())
+                .filter(value -> Objects.equals(value.text(), edge.text()))
+                .noneMatch(value -> value.target() == edge.target())
+        ) {
             edges.addLast(edge);
         }
     }

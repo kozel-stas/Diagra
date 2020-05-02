@@ -5,10 +5,9 @@ import com.diagra.java.JavaParser;
 import com.diagra.java.JavaParserBaseListener;
 import com.diagra.model.AlgorithmScheme;
 import com.diagra.model.AlgorithmSchemeBuilder;
-import com.diagra.model.Block;
-import com.diagra.model.Edge;
-import org.antlr.v4.runtime.RuleContext;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -33,7 +32,9 @@ public class SchemeGenerator extends JavaParserBaseListener {
             throw new IEException("Method " + ctx.IDENTIFIER().getText() + " duplication.");
         }
         currentMethodBuilder = AlgorithmSchemeBuilder.builder(ctx.IDENTIFIER().getText());
-        methodBuilders.put(ctx.IDENTIFIER().getText(), currentMethodBuilder);
+        if (methodBuilders.put(ctx.IDENTIFIER().getText(), currentMethodBuilder) != null) {
+            throw new IllegalStateException("Method overloading isn't supported.");
+        }
         changeState(ParseState.METHOD);
         LOG.debug("Method {} parsing was started. ", currentMethodBuilder.getName());
     }
@@ -78,8 +79,23 @@ public class SchemeGenerator extends JavaParserBaseListener {
     //<editor-fold desc="body">
 
     @Override
+    public void enterBlock(JavaParser.BlockContext ctx) {
+        if (subState(ParseState.METHOD)) {
+            changeState(ParseState.BLOCK);
+        }
+    }
+
+    @Override
+    public void exitBlock(JavaParser.BlockContext ctx) {
+        if (subState(ParseState.METHOD)) {
+            removeUntil(ParseState.BLOCK);
+            processIfStatement(ctx.getText());
+        }
+    }
+
+    @Override
     public void enterLocalVariableDeclaration(JavaParser.LocalVariableDeclarationContext ctx) {
-        if (subState(ParseState.METHOD_BODY)) {
+        if (subState(ParseState.METHOD_BODY) && state() != ParseState.CYCLE_STATEMENT) {
             String text = ctx.accept(schemeVisitor);
             currentMethodBuilder.process(text);
             LOG.debug("Method {} local declaration processed {}", currentMethodBuilder.getName(), text);
@@ -97,7 +113,7 @@ public class SchemeGenerator extends JavaParserBaseListener {
                 }
                 changeState(ParseState.IF_BLOCK);
                 LOG.debug("IF {} in method {} parsing was started.", ctx.parExpression().getText(), currentMethodBuilder.getName());
-                currentMethodBuilder.decision(ctx.parExpression().expression().accept(schemeVisitor));
+                currentMethodBuilder.decision(ctx.parExpression().accept(schemeVisitor));
                 currentMethodBuilder.decisionBlock("true");
             }
             if (ctx.SWITCH() != null) {
@@ -105,17 +121,35 @@ public class SchemeGenerator extends JavaParserBaseListener {
                 currentMethodBuilder.decision(ctx.parExpression().expression().accept(schemeVisitor));
                 LOG.debug("SWITCH {} in method {} parsing was started.", ctx.parExpression().getText(), currentMethodBuilder.getName());
             }
-            if (ctx.expression() != null && !ctx.expression().isEmpty()) {
-                for (JavaParser.ExpressionContext expressionContext : ctx.expression()) {
-                    String text = expressionContext.accept(schemeVisitor);
-                    if (expressionContext.methodCall() != null && (expressionContext.bop == null || (expressionContext.bop.getType() == JavaParser.DOT && expressionContext.THIS() != null))) {
-                        LOG.debug("Expression/Method {} in method {}.", text, currentMethodBuilder.getName());
-                        currentMethodBuilder.method(text);
-                    } else {
-                        LOG.debug("Expression/Process {} in method {}.", text, currentMethodBuilder.getName());
-                        currentMethodBuilder.process(text);
-                    }
+            if (ctx.statementExpression != null) {
+                String text = ctx.statementExpression.accept(schemeVisitor);
+                if (ctx.statementExpression.methodCall() != null && (ctx.statementExpression.bop == null || (ctx.statementExpression.bop.getType() == JavaParser.DOT && ctx.statementExpression.THIS() != null))) {
+                    LOG.debug("Expression/Method {} in method {}.", text, currentMethodBuilder.getName());
+                    currentMethodBuilder.method(text);
+                } else {
+                    LOG.debug("Expression/Process {} in method {}.", text, currentMethodBuilder.getName());
+                    currentMethodBuilder.process(text);
                 }
+            }
+            if (ctx.DO() != null || ctx.WHILE() != null || ctx.FOR() != null) {
+                String text = getRequiredParseRuleContext(ctx, JavaParser.ParExpressionContext.class, JavaParser.ForControlContext.class).accept(schemeVisitor);
+                changeState(ParseState.CYCLE_STATEMENT);
+                currentMethodBuilder.startCycle(text);
+                LOG.debug("CYCLE {} in method {} parsing was started.", text, currentMethodBuilder.getName());
+            }
+            if (subState(ParseState.CYCLE_STATEMENT)) {
+                if (ctx.BREAK() != null) {
+                    currentMethodBuilder.exitCycle();
+                    LOG.debug("Break in method {}.", currentMethodBuilder.getName());
+                }
+                if (ctx.CONTINUE() != null) {
+                    currentMethodBuilder.toStartCycle();
+                    LOG.debug("Continue in method {}.", currentMethodBuilder.getName());
+                }
+            }
+            if (ctx.RETURN() != null || ctx.THROW() != null) {
+                LOG.debug("RETURN/THROW in method {}.", currentMethodBuilder.getName());
+                currentMethodBuilder.terminate();
             }
         }
     }
@@ -143,6 +177,11 @@ public class SchemeGenerator extends JavaParserBaseListener {
                 removeUntil(ParseState.SWITCH);
                 currentMethodBuilder.endDecision();
             }
+            if (ctx.DO() != null || ctx.WHILE() != null || ctx.FOR() != null) {
+                LOG.debug("CYCLE {} in method {} parsing was ended.", ctx.getText(), currentMethodBuilder.getName());
+                removeUntil(ParseState.CYCLE_STATEMENT);
+                currentMethodBuilder.endCycle();
+            }
         }
     }
 
@@ -158,7 +197,11 @@ public class SchemeGenerator extends JavaParserBaseListener {
         if (subState(ParseState.METHOD)) {
             removeUntil(ParseState.SWITCH_BLOCK);
             JavaParser.BlockStatementContext blockStatementContext = ctx.blockStatement(ctx.blockStatement().size() - 1);
-            boolean casted = blockStatementContext != null && blockStatementContext.statement() != null && blockStatementContext.statement().BREAK() == null;
+            boolean casted = blockStatementContext != null && blockStatementContext.statement() != null
+                    && (blockStatementContext.statement().BREAK() == null
+                    && blockStatementContext.statement().RETURN() == null
+                    && blockStatementContext.statement().THROW() == null
+            );
             if (!casted) {
                 currentMethodBuilder.endDecisionBlock();
             } else {
@@ -202,23 +245,35 @@ public class SchemeGenerator extends JavaParserBaseListener {
 
     @Override
     public void exitCompilationUnit(JavaParser.CompilationUnitContext ctx) {
-        List<Block> blocks = new ArrayList<>();
-        List<Edge> edges = new ArrayList<>();
-        String name = "";
+        AlgorithmScheme main = null;
+        List<AlgorithmScheme> sub = new LinkedList<>();
         for (AlgorithmSchemeBuilder value : methodBuilders.values()) {
-            AlgorithmScheme algorithmScheme = value.build();
-            blocks.addAll(algorithmScheme.getBlocks());
-            edges.addAll(algorithmScheme.getEdges());
-            name = algorithmScheme.getName();
+            if (value.getName().toLowerCase().contains("main")) {
+                main = value.build();
+                continue;
+            }
+            sub.add(value.build());
         }
-        generatedSchema = new AlgorithmScheme(name, blocks, edges);
+        sub.add(main);
+        generatedSchema = AlgorithmSchemeBuilder.builder(null, sub.toArray(new AlgorithmScheme[0])).build();
     }
 
     public AlgorithmScheme getScheme() {
         return generatedSchema;
     }
 
-    //<editor-fold desc="utils">
+     //<editor-fold desc="utils">
+
+    @SafeVarargs
+    private static ParserRuleContext getRequiredParseRuleContext(ParserRuleContext context, Class<? extends ParserRuleContext>... classes) {
+        for (Class<? extends ParserRuleContext> aClass : classes) {
+            ParserRuleContext parserRuleContext = context.getRuleContext(aClass, 0);
+            if (parserRuleContext != null) {
+                return parserRuleContext;
+            }
+        }
+        throw new IllegalArgumentException("Required param was missed.");
+    }
 
     private void removeUntil(ParseState parseState) {
         Iterator<ParseState> iterator = states.descendingIterator();
@@ -259,6 +314,7 @@ public class SchemeGenerator extends JavaParserBaseListener {
         ELSE_BLOCK,
         SWITCH,
         SWITCH_BLOCK,
+        BLOCK,
         CYCLE_STATEMENT,
         ;
     }
