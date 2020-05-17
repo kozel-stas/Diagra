@@ -4,10 +4,7 @@ import com.diagra.ConverterService;
 import com.diagra.IEException;
 import com.diagra.Resource;
 import com.diagra.ResourceType;
-import com.diagra.model.AlgorithmScheme;
-import com.diagra.model.Block;
-import com.diagra.model.BlockType;
-import com.diagra.model.Edge;
+import com.diagra.model.*;
 import com.diagra.mxgraph.MxGraphModel;
 import com.diagra.mxgraph.ObjectFactory;
 import org.springframework.stereotype.Service;
@@ -82,11 +79,17 @@ public class MXGraphXmlConverter implements ConverterService {
             cell.setParent(1);
             geo.setRelative((byte) 1);
             geo.setAs("geometry");
-
             cell.setMxGeometry(geo);
             if (cell.getSource() != null && cell.getTarget() != null) {
                 mxGraphModel.getRoot().getMxCell().add(cell);
             }
+
+            if (edge.edgeType() == EdgeType.DOTTED_LINE) {
+                cell.setStyle("edgeStyle=elbowEdgeStyle;dashed=1;endArrow=none");
+            } else {
+                cell.setStyle("edgeStyle=elbowEdgeStyle");
+            }
+
             id++;
         }
         return new Resource(ResourceType.XML_MXGRAPH, mxGraphModel);
@@ -96,12 +99,13 @@ public class MXGraphXmlConverter implements ConverterService {
 
         DECISION(100, 100, "geometry", "shape=rhombus", BlockType.DECISION),
         PROCESS(100, 40, "geometry", "", BlockType.PROCESS),
-        PREDEFINED_PROCESS(100, 60, "geometry", "shape=process", BlockType.PREDEFINED_PROCESS),
+        PREDEFINED_PROCESS(100, 60, "geometry", "shape=predefined_process", BlockType.PREDEFINED_PROCESS),
         CONNECTOR(40, 40, "geometry", "shape=ellipse", BlockType.CONNECTOR),
-        DATA(100, 60, "geometry", "shape=parallelogram;", BlockType.DATA),
+        DATA(100, 60, "geometry", "shape=data;", BlockType.DATA),
         TERMINATOR(100, 40, "geometry", "shape=ellipse", BlockType.TERMINATOR),
-        CYCLE_START(100, 100, "geometry", "shape=ellipse", BlockType.CYCLE_START),
-        CYCLE_END(100, 100, "geometry", "shape=ellipse", BlockType.CYCLE_END),
+        CYCLE_START(100, 50, "geometry", "shape=cycle_start", BlockType.CYCLE_START),
+        CYCLE_END(100, 50, "geometry", "shape=cycle_end", BlockType.CYCLE_END),
+        COMMENT(100, 100, "geometry", "shape=comment", BlockType.COMMENT),
         ;
 
         private final int width;

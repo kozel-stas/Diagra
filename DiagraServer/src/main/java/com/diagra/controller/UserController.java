@@ -1,12 +1,14 @@
 package com.diagra.controller;
 
 import com.diagra.dto.UserDto;
+import com.diagra.logic.algorithm.AlgorithmSchemeManager;
 import com.diagra.mapper.UserMapper;
 import com.diagra.utils.*;
 import com.diagra.logic.user.UserManager;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,10 +23,12 @@ import javax.validation.Valid;
 public class UserController {
 
     private final UserManager userManager;
+    private final AlgorithmSchemeManager algorithmSchemeManager;
     private final UserMapper userMapper;
 
-    public UserController(UserManager userManager, UserMapper userMapper) {
+    public UserController(UserManager userManager, AlgorithmSchemeManager algorithmSchemeManager, UserMapper userMapper) {
         this.userManager = userManager;
+        this.algorithmSchemeManager = algorithmSchemeManager;
         this.userMapper = userMapper;
     }
 
@@ -32,11 +36,27 @@ public class UserController {
             method = {RequestMethod.DELETE}
     )
     public DeferredResult<ResponseEntity<?>> delete(OAuth2Authentication user) {
+        String userID = AuthUtil.getUserId(user);
         CustomDeferredResult<ResponseEntity<?>> deferredResult = new CustomDeferredResult<>();
-        userManager.deleteUser(AuthUtil.getUserId(user)).addCallback(new DefaultResponseCallback<Void>(deferredResult) {
+        algorithmSchemeManager.delete(userID).addCallback(new ListenableFutureCallback<Void>() {
+            @Override
+            public void onFailure(Throwable throwable) {
+                userManager.deleteUser(userID).addCallback(new DefaultResponseCallback<Void>(deferredResult) {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        deferredResult.setResult(ResponseEntity.ok().build());
+                    }
+                });
+            }
+
             @Override
             public void onSuccess(Void aVoid) {
-                deferredResult.setResult(ResponseEntity.ok().build());
+                userManager.deleteUser(userID).addCallback(new DefaultResponseCallback<Void>(deferredResult) {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        deferredResult.setResult(ResponseEntity.ok().build());
+                    }
+                });
             }
         });
         return deferredResult;

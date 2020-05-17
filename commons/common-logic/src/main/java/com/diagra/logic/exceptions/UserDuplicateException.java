@@ -1,4 +1,4 @@
-package com.diagra.logic.user.exceptions;
+package com.diagra.logic.exceptions;
 
 import com.diagra.dao.model.UserEntity;
 import org.springframework.http.HttpStatus;

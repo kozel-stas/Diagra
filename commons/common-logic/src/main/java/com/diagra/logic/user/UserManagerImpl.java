@@ -2,8 +2,8 @@ package com.diagra.logic.user;
 
 import com.diagra.dao.manager.BaseManagerImpl;
 import com.diagra.dao.model.UserEntity;
-import com.diagra.logic.user.exceptions.UserDuplicateException;
-import com.diagra.logic.user.exceptions.UserNotFoundException;
+import com.diagra.logic.exceptions.UserDuplicateException;
+import com.diagra.logic.exceptions.UserNotFoundException;
 import org.springframework.core.task.AsyncListenableTaskExecutor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Example;

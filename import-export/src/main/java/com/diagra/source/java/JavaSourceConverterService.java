@@ -41,9 +41,8 @@ public class JavaSourceConverterService implements ConverterService {
         if (!syntaxErrorListener.errors().isEmpty()) {
             throw new IEException(syntaxErrorListener.toString());
         }
-
         ParseTreeWalker walker = new ParseTreeWalker();
-        SchemeGenerator listener = new SchemeGenerator();
+        SchemeGenerator listener = new SchemeGenerator(new CommentProcessorImpl(() -> CharStreams.fromString(resource.getObject().toString())));
         walker.walk(listener, parser.compilationUnit());
         return new Resource(ResourceType.INNER_REPRESENTATION, listener.getScheme());
     }

@@ -35,3 +35,5 @@ typings
 *.iml
 .idea
 target
+
+DiagraServer/src/main/resources/static

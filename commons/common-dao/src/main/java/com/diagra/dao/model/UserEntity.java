@@ -1,5 +1,6 @@
 package com.diagra.dao.model;
 
+import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Document(collection = "user")
+@Data
 public class UserEntity {
 
     @Id

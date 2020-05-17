@@ -7,7 +7,7 @@ import com.diagra.model.AlgorithmScheme;
 import com.diagra.model.AlgorithmSchemeBuilder;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,9 +20,14 @@ public class SchemeGenerator extends JavaParserBaseListener {
     private final Map<String, AlgorithmSchemeBuilder> methodBuilders = new HashMap<>();
     private final LinkedList<ParseState> states = new LinkedList<>();
     private final SchemeVisitor schemeVisitor = new SchemeVisitor();
+    private final CommentProcessor commentProcessor;
     private AlgorithmSchemeBuilder currentMethodBuilder;
 
     private AlgorithmScheme generatedSchema;
+
+    public SchemeGenerator(CommentProcessor commentProcessor) {
+        this.commentProcessor = commentProcessor;
+    }
 
     //<editor-fold desc="method">
 
@@ -36,6 +41,7 @@ public class SchemeGenerator extends JavaParserBaseListener {
             throw new IllegalStateException("Method overloading isn't supported.");
         }
         changeState(ParseState.METHOD);
+        comment(ctx);
         LOG.debug("Method {} parsing was started. ", currentMethodBuilder.getName());
     }
 
@@ -50,7 +56,7 @@ public class SchemeGenerator extends JavaParserBaseListener {
     public void enterFormalParameter(JavaParser.FormalParameterContext ctx) {
         if (subState(ParseState.METHOD)) {
             String text = ctx.accept(schemeVisitor);
-            currentMethodBuilder.input(text);
+            currentMethodBuilder.data(text);
             LOG.debug("Method {} input param parsed.", text);
         }
     }
@@ -59,7 +65,7 @@ public class SchemeGenerator extends JavaParserBaseListener {
     public void enterLastFormalParameter(JavaParser.LastFormalParameterContext ctx) {
         if (subState(ParseState.METHOD)) {
             String text = ctx.accept(schemeVisitor);
-            currentMethodBuilder.input(text);
+            currentMethodBuilder.data(text);
             LOG.debug("Method {} input param parsed.", text);
         }
     }
@@ -99,6 +105,7 @@ public class SchemeGenerator extends JavaParserBaseListener {
             String text = ctx.accept(schemeVisitor);
             currentMethodBuilder.process(text);
             LOG.debug("Method {} local declaration processed {}", currentMethodBuilder.getName(), text);
+            comment(ctx);
         }
     }
 
@@ -151,6 +158,7 @@ public class SchemeGenerator extends JavaParserBaseListener {
                 LOG.debug("RETURN/THROW in method {}.", currentMethodBuilder.getName());
                 currentMethodBuilder.terminate();
             }
+            comment(ctx);
         }
     }
 
@@ -232,17 +240,6 @@ public class SchemeGenerator extends JavaParserBaseListener {
 
     //</editor-fold>
 
-    private void processIfStatement(String text) {
-        if (state() == ParseState.IF_BLOCK) {
-            removeUntil(ParseState.IF_BLOCK);
-            currentMethodBuilder.endDecisionBlock();
-            if (state() == ParseState.ELSE_BLOCK) {
-                LOG.debug("ELSE {} in method {} parsing was started.", text, currentMethodBuilder.getName());
-                currentMethodBuilder.decisionBlock("false");
-            }
-        }
-    }
-
     @Override
     public void exitCompilationUnit(JavaParser.CompilationUnitContext ctx) {
         AlgorithmScheme main = null;
@@ -254,7 +251,9 @@ public class SchemeGenerator extends JavaParserBaseListener {
             }
             sub.add(value.build());
         }
-        sub.add(main);
+        if (main != null) {
+            sub.add(main);
+        }
         generatedSchema = AlgorithmSchemeBuilder.builder(null, sub.toArray(new AlgorithmScheme[0])).build();
     }
 
@@ -262,7 +261,26 @@ public class SchemeGenerator extends JavaParserBaseListener {
         return generatedSchema;
     }
 
-     //<editor-fold desc="utils">
+    private void processIfStatement(String text) {
+        if (state() == ParseState.IF_BLOCK) {
+            removeUntil(ParseState.IF_BLOCK);
+            currentMethodBuilder.endDecisionBlock();
+            if (state() == ParseState.ELSE_BLOCK) {
+                LOG.debug("ELSE {} in method {} parsing was started.", text, currentMethodBuilder.getName());
+                currentMethodBuilder.decisionBlock("false");
+            }
+        }
+    }
+
+    //<editor-fold desc="utils">
+
+    private void comment(ParserRuleContext ctx) {
+        String comment = commentProcessor.comment(ctx);
+        if (StringUtils.isNotBlank(comment) && currentMethodBuilder != null && subState(ParseState.METHOD)) {
+            LOG.debug("Comment {} in method {}.", comment, currentMethodBuilder.getName());
+            currentMethodBuilder.comment(comment);
+        }
+    }
 
     @SafeVarargs
     private static ParserRuleContext getRequiredParseRuleContext(ParserRuleContext context, Class<? extends ParserRuleContext>... classes) {

@@ -18,6 +18,12 @@
             <artifactId>antlr4-runtime</artifactId>
             <version>4.8</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.maven.plugin-tools</groupId>
+            <artifactId>maven-plugin-annotations</artifactId>
+            <version>3.5.2</version>
+            <scope>provided</scope><!-- annotations are needed only to build the plugin -->
+        </dependency>
     </dependencies>
 
     <build>
@@ -27,18 +33,18 @@
                 <artifactId>download-maven-plugin</artifactId>
                 <version>1.4.0</version>
                 <executions>
-                    <execution>
-                        <id>lexer</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>wget</goal>
-                        </goals>
-                        <configuration>
-                            <url>https://raw.githubusercontent.com/antlr/grammars-v4/master/java/java/JavaLexer.g4</url>
-                            <outputFileName>JavaLexer.g4</outputFileName>
-                            <outputDirectory>src/main/antlr4/com/diagra/java/</outputDirectory>
-                        </configuration>
-                    </execution>
+<!--                    <execution>-->
+<!--                        <id>lexer</id>-->
+<!--                        <phase>generate-sources</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>wget</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <url>https://raw.githubusercontent.com/antlr/grammars-v4/edcbd999be46260c2d398c9d5db0bfc8d43c86b8/java/java/JavaLexer.g4</url>-->
+<!--                            <outputFileName>JavaLexer.g4</outputFileName>-->
+<!--                            <outputDirectory>src/main/antlr4/com/diagra/java/</outputDirectory>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
                     <execution>
                         <id>parser</id>
                         <phase>generate-sources</phase>
@@ -46,7 +52,7 @@
                             <goal>wget</goal>
                         </goals>
                         <configuration>
-                            <url>https://raw.githubusercontent.com/antlr/grammars-v4/master/java/java/JavaParser.g4
+                            <url>https://raw.githubusercontent.com/antlr/grammars-v4/edcbd999be46260c2d398c9d5db0bfc8d43c86b8/java/java/JavaParser.g4
                             </url>
                             <outputFileName>JavaParser.g4</outputFileName>
                             <outputDirectory>src/main/antlr4/com/diagra/java/</outputDirectory>

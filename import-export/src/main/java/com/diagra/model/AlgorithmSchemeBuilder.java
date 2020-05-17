@@ -10,16 +10,16 @@ import java.util.stream.Collectors;
 public class AlgorithmSchemeBuilder {
 
     private static final List<String> TMP_CONNECTOR = ImmutableList.of("T", "M", "P", "D");
-    public static final List<String> START_TERMINATOR = Collections.singletonList("Start");
-    public static final List<String> END_TERMINATOR = Collections.singletonList("End");
+    private static final List<String> START_TERMINATOR = Collections.singletonList("Start");
+    private static final List<String> END_TERMINATOR = Collections.singletonList("End");
 
-    private final String name;
-    private final LinkedList<Block> blocks = new LinkedList<>();
-    private final LinkedList<Edge> edges = new LinkedList<>();
-    private final Block start = new BaseBlock(BlockType.TERMINATOR, START_TERMINATOR);
-    private final Block end = new BaseBlock(BlockType.TERMINATOR, END_TERMINATOR);
+    protected final String name;
+    protected final LinkedList<Block> blocks = new LinkedList<>();
+    protected final LinkedList<Edge> edges = new LinkedList<>();
+    protected final Block start = new BaseBlock(BlockType.TERMINATOR, START_TERMINATOR);
+    protected final Block end = new BaseBlock(BlockType.TERMINATOR, END_TERMINATOR);
 
-    private final LinkedList<Block> decisions = new LinkedList<>();
+    protected final LinkedList<Block> decisions = new LinkedList<>();
     private final Map<Block, DecisionBlockInfo> decisionBlockInfo = new HashMap<>();
 
     private final LinkedList<Block> cycles = new LinkedList<>();
@@ -109,7 +109,16 @@ public class AlgorithmSchemeBuilder {
                 edges.addAll(value.getEdges());
                 name = value.getName();
             }
-            AlgorithmSchemeBuilder algorithmSchemeBuilder = new AlgorithmSchemeBuilder(name);
+            AlgorithmSchemeBuilder algorithmSchemeBuilder = new AlgorithmSchemeBuilder(name) {
+                @Override
+                public AlgorithmScheme build() {
+                    if (!this.decisions.isEmpty()) {
+                        throw new IllegalStateException("Decision wasn't ended correctly.");
+                    }
+                    deleteInnerStructures();
+                    return new AlgorithmScheme(name, this.blocks, edges);
+                }
+            };
             algorithmSchemeBuilder.blocks.addAll(blocks);
             algorithmSchemeBuilder.edges.addAll(edges);
             return algorithmSchemeBuilder;
@@ -150,11 +159,20 @@ public class AlgorithmSchemeBuilder {
         return name;
     }
 
-    public void input(String input) {
+    public void data(String input) {
         Block data = new BaseBlock(BlockType.DATA, Collections.singletonList(input));
         Block connect = peekForConnect();
         if (connect != null) {
             addEdge(new BaseEdge(EdgeType.LINE, null, connect, data));
+        }
+        blocks.addLast(data);
+    }
+
+    public void comment(String comment) {
+        Block data = new BaseBlock(BlockType.COMMENT, Collections.singletonList(comment));
+        Block connect = peekForConnect();
+        if (connect != null) {
+            addEdge(new BaseEdge(EdgeType.DOTTED_LINE, null, connect, data));
         }
         blocks.addLast(data);
     }
@@ -299,7 +317,7 @@ public class AlgorithmSchemeBuilder {
         return new AlgorithmScheme(name, blocks, edges);
     }
 
-    private void deleteInnerStructures() {
+    protected void deleteInnerStructures() {
         Iterator<Block> blockIterator = blocks.iterator();
         //FIXME: Extra iterations
         while (blockIterator.hasNext()) {
@@ -328,7 +346,7 @@ public class AlgorithmSchemeBuilder {
     }
 
     private void addEdge(Edge edge) {
-        if (decisions.isEmpty()) {
+        if (decisions.isEmpty() || edge.target().blockType() == BlockType.COMMENT) {
             edges.addLast(edge);
         } else if (decisionBlockInfo.get(decisions.peekLast()).getLastPointInCurrentBlock() == null) {
             Preconditions.checkState(decisions.peekLast() == edge.source());
@@ -345,7 +363,7 @@ public class AlgorithmSchemeBuilder {
         }
     }
 
-    private void addEdgeIfNotExists(Edge edge) {
+    protected void addEdgeIfNotExists(Edge edge) {
         if (edges
                 .stream()
                 .filter(value -> value.source() == edge.source())
@@ -359,7 +377,13 @@ public class AlgorithmSchemeBuilder {
 
     private Block peekForConnect() {
         if (decisions.isEmpty()) {
-            return blocks.peekLast();
+            Iterator<Block> descendingIterator = blocks.descendingIterator();
+            while (descendingIterator.hasNext()) {
+                Block block = descendingIterator.next();
+                if (block.blockType() != BlockType.COMMENT) {
+                    return block;
+                }
+            }
         } else {
             Block block = decisions.peekLast();
             Block lastBlockInDecision = decisionBlockInfo.get(block).getLastPointInCurrentBlock();
@@ -368,6 +392,7 @@ public class AlgorithmSchemeBuilder {
             }
             return lastBlockInDecision;
         }
+        return start;
     }
 
 }

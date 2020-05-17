@@ -1,6 +1,6 @@
 package com.diagra.utils;
 
-import com.diagra.logic.user.exceptions.BaseServerException;
+import com.diagra.logic.exceptions.BaseServerException;
 import com.diagra.mapper.EntityMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
