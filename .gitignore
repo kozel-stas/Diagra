@@ -9,6 +9,8 @@ bazel-out
 
 # dependencies
 node_modules
+Diagra/dist
+Diagra/temp
 
 # profiling files
 chrome-profiler-events*.json
