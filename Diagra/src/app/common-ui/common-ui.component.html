@@ -1,5 +1,5 @@
 <div>
-  <mat-toolbar color="primary">
+  <mat-toolbar color="#52BAD5">
     <mat-toolbar-row>
       <h1>Diagra</h1>
       <button mat-icon-button (click)="sidenav.toggle()">
@@ -20,10 +20,10 @@
     <mat-sidenav #sidenav>
       <mat-nav-list>
         <a (click)="sidenav.toggle()" mat-list-item [routerLink]="'/home'"> Home </a>
-        <a (click)="sidenav.toggle()" mat-list-item [routerLink]="'/documents'"> Documents </a>
+        <a (click)="sidenav.toggle()" *ngIf="auth.isAuthorized()" mat-list-item [routerLink]="'/documents'"> Documents </a>
         <a (click)="sidenav.toggle()" *ngIf="auth.isAuthorized()" mat-list-item [routerLink]="'/account'"> Account </a>
         <a (click)="sidenav.toggle()" mat-list-item [routerLink]="'/help'"> Help center </a>
-        <a (click)="sidenav.toggle()" mat-list-item [routerLink]="'/graph'"> Test </a>
+        <a (click)="sidenav.toggle()" *ngIf="!auth.isAuthorized()" mat-list-item [routerLink]="'/graph'"> Scheme of algorithm </a>
       </mat-nav-list>
     </mat-sidenav>
     <mat-sidenav-content>

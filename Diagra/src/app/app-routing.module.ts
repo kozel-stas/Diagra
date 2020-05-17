@@ -4,8 +4,9 @@ import {SignInComponent} from "./sign-in/sign-in.component";
 import {SignUpComponent} from "./sign-up/sign-up.component";
 import {CommonUiComponent} from "./common-ui/common-ui.component";
 import {GraphComponent} from "./graph/graph.component";
-import {CodeComponent} from "./code/code.component";
 import {UnionComponent} from "./union/union.component";
+import {HelpComponent} from "./help/help.component";
+import {HomeComponent} from "./home/home.component";
 
 
 const routes: Routes = [
@@ -13,6 +14,18 @@ const routes: Routes = [
     path: "",
     component: CommonUiComponent,
     children: [
+      {
+        path: '',
+        component: HomeComponent
+      },
+      {
+        path: 'help',
+        component: HelpComponent
+      },
+      {
+        path: 'home',
+        component: HomeComponent
+      },
       {
         path: 'signUp',
         component: SignUpComponent
@@ -24,10 +37,6 @@ const routes: Routes = [
       {
         path: 'union',
         component: UnionComponent
-      },
-      {
-        path: 'code',
-        component: CodeComponent
       },
       {
         path: 'signIn',

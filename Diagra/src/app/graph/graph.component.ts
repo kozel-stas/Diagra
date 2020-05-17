@@ -3,6 +3,8 @@ import {MxGraphServiceFactory} from "./MxGraphServiceFactory";
 import {mxgraph} from "ts-mxgraph";
 import {Constant} from "../ constant";
 import {EventListener} from "../services/EventMgr";
+import {Comment, CycleEnd, CycleStart, Data, PredefinedProcess} from "./shapes/shapes";
+import {Layout} from "./layout";
 
 @Component({
   selector: 'app-graph',
@@ -23,7 +25,9 @@ export class GraphComponent implements OnInit {
   private static mxCell: typeof mxgraph.mxCell = MxGraphServiceFactory.getMxGraphProperty("mxCell");
   private static mxUndoManager: typeof mxgraph.mxUndoManager = MxGraphServiceFactory.getMxGraphProperty("mxUndoManager");
   private static mxCodec: typeof mxgraph.mxCodec = MxGraphServiceFactory.getMxGraphProperty("mxCodec");
-  private static mxHierarchicalLayout: typeof mxgraph.mxHierarchicalLayout = MxGraphServiceFactory.getMxGraphProperty("mxHierarchicalLayout");
+  private static mxConnectionConstraint: typeof mxgraph.mxConnectionConstraint = MxGraphServiceFactory.getMxGraphProperty("mxConnectionConstraint");
+  private static mxPoint: typeof mxgraph.mxPoint = MxGraphServiceFactory.getMxGraphProperty("mxPoint");
+  private static mxOutline: typeof mxgraph.mxOutline = MxGraphServiceFactory.getMxGraphProperty("mxOutline");
 
   graph: mxgraph.mxGraph;
 
@@ -33,14 +37,17 @@ export class GraphComponent implements OnInit {
 
   ngOnInit(): void {
     let container = document.getElementById("graphContainer");
+    let outline = document.getElementById("outLineContainer");
     let toolbarContainer = document.getElementById("toolbarContainer");
-    if (container && toolbarContainer) {
+    if (container && toolbarContainer && outline) {
       this.graph = new GraphComponent.mxGraph(container);
       this.initEdit(this.graph);
       this.initStyles();
       new GraphComponent.mxRubberband(this.graph);
       this.initToolBar(new GraphComponent.mxToolbar(toolbarContainer));
       this.initUndoManager();
+      new GraphComponent.mxOutline(this.graph, outline);
+      GraphComponent.initCustomShapes();
       Constant.EVENT_MGR.subscribe("graph_update", <EventListener>{
         fireEvent: (obj) => {
           this.fromXml(obj.xml);
@@ -49,7 +56,7 @@ export class GraphComponent implements OnInit {
     }
   }
 
-  private initEdit(graph) {
+  private initEdit(graph: mxgraph.mxGraph) {
     MxGraphServiceFactory.getMxGraphProperty("mxConnectionHandler").prototype.connectImage = new GraphComponent.mxImage('/assets/connector.gif', 16, 16)
     graph.dropEnabled = true;
     graph.setConnectable(true);
@@ -81,6 +88,18 @@ export class GraphComponent implements OnInit {
         MxGraphServiceFactory.getMxGraphProperty("mxClipboard").paste(graph);
       }
     });
+    this.graph.getAllConnectionConstraints = function (terminal, source) {
+      let points = [
+        new GraphComponent.mxConnectionConstraint(new GraphComponent.mxPoint(0.5, 0), true),
+        new GraphComponent.mxConnectionConstraint(new GraphComponent.mxPoint(0, 0.5), true),
+        new GraphComponent.mxConnectionConstraint(new GraphComponent.mxPoint(1, 0.5), true),
+        new GraphComponent.mxConnectionConstraint(new GraphComponent.mxPoint(0.5, 1), true)
+      ]
+      if (terminal != null && terminal.shape != null) {
+        return points;
+      }
+      return null;
+    };
   }
 
   private initToolBar(toolbar) {
@@ -111,6 +130,18 @@ export class GraphComponent implements OnInit {
       "/assets/rhombus.gif",
       "Decision"
     );
+    let graph = this.graph;
+    toolbar.addItem('Zoom In', '/assets/zoom_in32.png', function (evt) {
+      graph.zoomIn();
+    });
+
+    toolbar.addItem('Zoom Out', '/assets/zoom_out32.png', function (evt) {
+      graph.zoomOut();
+    });
+
+    toolbar.addItem('Actual Size', '/assets/view_1_132.png', function (evt) {
+      graph.zoomActual();
+    });
   }
 
   private initUndoManager() {
@@ -176,15 +207,66 @@ export class GraphComponent implements OnInit {
     MxGraphServiceFactory.getMxGraphProperty('mxUtils').makeDraggable(img, graph, drug);
   }
 
+  private static initCustomShapes() {
+    MxGraphServiceFactory.getMxGraphProperty('mxCellRenderer').registerShape('predefined_process', PredefinedProcess);
+    MxGraphServiceFactory.getMxGraphProperty('mxCellRenderer').registerShape('data', Data);
+    MxGraphServiceFactory.getMxGraphProperty('mxCellRenderer').registerShape('cycle_start', CycleStart);
+    MxGraphServiceFactory.getMxGraphProperty('mxCellRenderer').registerShape('cycle_end', CycleEnd);
+    MxGraphServiceFactory.getMxGraphProperty('mxCellRenderer').registerShape('comment', Comment);
+  }
+
   private fromXml(xml: string): void {
-    console.log(this);
-    console.log(this.graph)
-    this.graph.removeCells(this.graph.getChildVertices(this.graph.getDefaultParent()))
+    this.graph.getModel().beginUpdate();
+    try {
+      this.graph.removeCells(this.graph.getChildVertices(this.graph.getDefaultParent()))
+    } finally {
+      this.graph.getModel().endUpdate();
+    }
     let xmlDom = MxGraphServiceFactory.getMxGraphProperty("mxUtils").parseXml(xml);
     let codec = new GraphComponent.mxCodec(xmlDom);
     codec.decode(xmlDom.documentElement, this.graph.getModel());
-    let layout = new GraphComponent.mxHierarchicalLayout(this.graph);
-    layout.execute(this.graph.getDefaultParent());
+    this.sort();
   }
 
+  private sort() {
+    let cells = [];
+    for (let i = 0; i < Object.getOwnPropertyNames(this.graph.getModel().cells).length; i++) {
+      let cell = this.graph.getModel().cells[i];
+      if (cell.getStyle() && cell.getStyle().includes("shape=comment")) {
+        cells.push(cell);
+      }
+    }
+    let edges = [];
+    this.graph.getModel().beginUpdate();
+    try {
+      for (let cell of this.graph.getAllEdges(cells)) {
+        if (cells.includes(cell.source) || cells.includes(cell.target)) {
+          edges.push(cell)
+          this.graph.getModel().remove(cell);
+        }
+      }
+    } finally {
+      this.graph.getModel().endUpdate();
+    }
+    new Layout(this.graph).execute(this.graph.getDefaultParent());
+    this.graph.getModel().beginUpdate();
+    try {
+      for (let edge of edges) {
+        if (cells.includes(edge.source) || cells.includes(edge.target)) {
+          let comment = cells.includes(edge.source) ? edge.source : edge.target;
+          let source = cells.includes(edge.source) ? edge.target : edge.source;
+          console.log(source.getGeometry().getCenterX() + (source.getGeometry().width / 2));
+          this.graph.moveCells(
+            [comment],
+            (source.getGeometry().getCenterX() + (source.getGeometry().width / 2)),
+            source.getGeometry().getCenterY() - comment.getGeometry().height / 2,
+            false
+          );
+          // this.graph.addEdge(edge, this.graph.getDefaultParent());
+        }
+      }
+    } finally {
+      this.graph.getModel().endUpdate();
+    }
+  }
 }

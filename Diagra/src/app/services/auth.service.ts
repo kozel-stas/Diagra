@@ -4,6 +4,7 @@ import {Injectable} from "@angular/core";
 import {Observable} from "rxjs";
 import {of} from "rxjs";
 import {map} from "rxjs/operators";
+import {Router} from "@angular/router";
 
 export class AuthData {
   access_token: string;
@@ -22,7 +23,7 @@ export class AuthService {
   private authorized: boolean = false;
   private authData: AuthData = null;
 
-  constructor(private httpClient: HttpClient) {
+  constructor(private httpClient: HttpClient, private router: Router) {
     this.ngOnInit();
   }
 
@@ -152,6 +153,7 @@ export class AuthService {
     this.authorized = false;
     localStorage.setItem(Constant.REFRESH_TOKEN, null);
     Constant.EVENT_MGR.fireEvent("logout", {})
+    this.router.navigate(['../']);
   }
 
   public login() {

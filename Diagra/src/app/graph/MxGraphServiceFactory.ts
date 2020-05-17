@@ -4,7 +4,8 @@ type MxGraphProperty =
   | 'mxCellRenderer'
   | 'mxClient'
   | 'mxConstants'
-  | 'mxEllipse'
+  | 'mxCylinder'
+  | 'mxConnectionConstraint'
   | 'mxGeometry'
   | 'mxGraph'
   | 'mxCell'
@@ -18,13 +19,18 @@ type MxGraphProperty =
   | 'mxImage'
   | 'mxKeyHandler'
   | 'mxDragSource'
+  | 'mxOutline'
   | 'mxHierarchicalLayout'
   | 'mxClipboard'
   | 'mxUndoManager'
+  | 'mxStackLayout'
   | 'mxRubberband'
   | 'mxEvent'
   | 'mxToolbar'
+  | 'mxHierarchicalEdgeStyle'
   | 'mxGraphHandler'
+  | 'mxCompositeLayout'
+  | 'mxCompactTreeLayout'
   | 'mxConnectionHandler';
 
 export class MxGraphServiceFactory {

@@ -28,7 +28,7 @@ export class CommonUiComponent implements OnInit {ё
 
     setTimeout(() => {
       dialogRef.afterClosed().subscribe(result => {
-        this.router.navigate(['../']);
+        // this.router.navigate(['../']);
       })
     });
   }
@@ -38,7 +38,7 @@ export class CommonUiComponent implements OnInit {ё
 
     setTimeout(() => {
       dialogRef.afterClosed().subscribe(result => {
-        this.router.navigate(['../']);
+        // this.router.navigate(['../']);
       })
     });
   }

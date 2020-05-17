@@ -30,6 +30,8 @@ import {CodeComponent} from './code/code.component';
 import {CodeEditorModule} from '@ngstack/code-editor';
 import {NgxResizableModule} from '@3dgenomes/ngx-resizable';
 import {UnionComponent} from './union/union.component';
+import { HelpComponent } from './help/help.component';
+import { HomeComponent } from './home/home.component';
 
 @NgModule({
   declarations: [
@@ -41,6 +43,8 @@ import {UnionComponent} from './union/union.component';
     GraphComponent,
     CodeComponent,
     UnionComponent,
+    HelpComponent,
+    HomeComponent,
   ],
   imports: [
     BrowserModule,
