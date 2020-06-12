@@ -3,7 +3,7 @@ import {MxGraphServiceFactory} from "./MxGraphServiceFactory";
 import {mxgraph} from "ts-mxgraph";
 import {Constant} from "../ constant";
 import {EventListener} from "../services/EventMgr";
-import {Comment, CycleEnd, CycleStart, Data, PredefinedProcess} from "./shapes/shapes";
+import {Comment, CycleEnd, CycleStart, Data, PredefinedProcess, Terminator} from "./shapes/shapes";
 import {Layout} from "./layout";
 
 @Component({
@@ -213,6 +213,7 @@ export class GraphComponent implements OnInit {
     MxGraphServiceFactory.getMxGraphProperty('mxCellRenderer').registerShape('cycle_start', CycleStart);
     MxGraphServiceFactory.getMxGraphProperty('mxCellRenderer').registerShape('cycle_end', CycleEnd);
     MxGraphServiceFactory.getMxGraphProperty('mxCellRenderer').registerShape('comment', Comment);
+    MxGraphServiceFactory.getMxGraphProperty('mxCellRenderer').registerShape('terminator', Terminator);
   }
 
   private fromXml(xml: string): void {

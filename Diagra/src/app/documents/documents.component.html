@@ -1,0 +1,40 @@
+<!-- Hero Section -->
+<section class="hero" id="hero">
+  <h2 class="hero_header">Diagra<span class="light">ms</span></h2>
+</section>
+<div>
+  <!-- Stats Gallery Section -->
+  <div class="gallery">
+    <ng-template #viewContainerRef></ng-template>
+  </div>
+  <div class="right_menu">
+    <button mat-button color="primary" class="group_button" (click)="createGroup = !createGroup">
+      <mat-icon *ngIf="createGroup">menu</mat-icon>
+      <mat-icon *ngIf="!createGroup">menu_open</mat-icon>
+      Create diagram
+    </button>
+    <div class="button_block" *ngIf="createGroup">
+      <button mat-button color="primary" class="sub_button">Create new diagram</button>
+      <button mat-button color="primary" class="sub_button">Import from source code</button>
+    </div>
+    <button mat-button color="primary" class="group_button" (click)="editGroup = !editGroup">
+      <mat-icon *ngIf="editGroup">menu</mat-icon>
+      <mat-icon *ngIf="!editGroup">menu_open</mat-icon>
+      Manage diagrams
+    </button>
+    <div class="button_block" *ngIf="editGroup">
+      <button mat-button color="primary" class="sub_button">Edit</button>
+      <button mat-button color="warn" class="sub_button">Delete</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Footer Section -->
+<!--<section class="footer_banner" id="contact">-->
+<!--  <h2 class="hidden">Footer Banner Section </h2>-->
+<!--  <p class="hero_header">FOR THE LATEST NEWS &amp; UPDATES &amp; SUPPORT </p>-->
+<!--  <div class="button-f" (click)="onSignUpBtnClick()">register</div>-->
+<!--</section>-->
+<!-- Copyrights Section -->
+<div class="copyright">&copy;2020- <strong>Diagra application</strong></div>

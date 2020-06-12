@@ -50,6 +50,18 @@ public class UserManagerImpl extends BaseManagerImpl<String, UserEntity> impleme
     }
 
     @Override
+    public ListenableFuture<UserEntity> updateUser(UserEntity userEntity) {
+        return asyncListenableTaskExecutor.submitListenable(() -> {
+            try {
+                userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
+                return repository.save(userEntity);
+            } catch (DuplicateKeyException e) {
+                throw new UserDuplicateException(userEntity, e);
+            }
+        });
+    }
+
+    @Override
     public ListenableFuture<UserEntity> registerUser(UserEntity userEntity) {
         return asyncListenableTaskExecutor.submitListenable(() -> {
             try {
@@ -57,8 +69,6 @@ public class UserManagerImpl extends BaseManagerImpl<String, UserEntity> impleme
                 return repository.insert(userEntity);
             } catch (DuplicateKeyException e) {
                 throw new UserDuplicateException(userEntity, e);
-            } catch (Exception e) {
-                throw e;
             }
         });
     }

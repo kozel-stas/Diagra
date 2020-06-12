@@ -7,6 +7,8 @@ import {GraphComponent} from "./graph/graph.component";
 import {UnionComponent} from "./union/union.component";
 import {HelpComponent} from "./help/help.component";
 import {HomeComponent} from "./home/home.component";
+import {DocumentsComponent} from "./documents/documents.component";
+import {AccountComponent} from "./account/account.component";
 
 
 const routes: Routes = [
@@ -35,12 +37,28 @@ const routes: Routes = [
         component: GraphComponent
       },
       {
+        path: 'documents',
+        component: DocumentsComponent
+      },
+      {
+        path: 'graph/:id',
+        component: GraphComponent
+      },
+      {
+        path: 'union/:id',
+        component: UnionComponent
+      },
+      {
         path: 'union',
         component: UnionComponent
       },
       {
         path: 'signIn',
         component: SignInComponent
+      },
+      {
+        path: 'account',
+        component: AccountComponent
       }
     ]
   },

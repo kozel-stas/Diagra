@@ -111,3 +111,22 @@ export class Comment extends mxCylinder {
   }
 
 }
+
+export class Terminator extends mxCylinder {
+
+  protected constructor(bounds: mxgraph.mxRectangle, fill: string, stroke: string, strokewidth: number) {
+    super(bounds, fill, stroke, strokewidth);
+  }
+
+  public paintVertexShape(c: mxgraph.mxSvgCanvas2D, x: number, y: number, w: number, h: number): void {
+    c.begin();
+    c.moveTo(x + w / 6, y);
+    c.lineTo(x + w / 6 * 5, y);
+    c.quadTo(x + w, y + h / 2, x + w / 6 * 5, y + h);
+    c.lineTo(x  + w / 6, y + h);
+    c.quadTo(x, y + h / 2, x + w / 6, y);
+    c.fillAndStroke();
+    c.close(undefined, undefined, undefined, undefined, undefined, undefined);
+  }
+
+}

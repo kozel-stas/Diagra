@@ -102,7 +102,7 @@ public class MXGraphXmlConverter implements ConverterService {
         PREDEFINED_PROCESS(100, 60, "geometry", "shape=predefined_process", BlockType.PREDEFINED_PROCESS),
         CONNECTOR(40, 40, "geometry", "shape=ellipse", BlockType.CONNECTOR),
         DATA(100, 60, "geometry", "shape=data;", BlockType.DATA),
-        TERMINATOR(100, 40, "geometry", "shape=ellipse", BlockType.TERMINATOR),
+        TERMINATOR(100, 25, "geometry", "shape=terminator", BlockType.TERMINATOR),
         CYCLE_START(100, 50, "geometry", "shape=cycle_start", BlockType.CYCLE_START),
         CYCLE_END(100, 50, "geometry", "shape=cycle_end", BlockType.CYCLE_END),
         COMMENT(100, 100, "geometry", "shape=comment", BlockType.COMMENT),

@@ -11,7 +11,7 @@ public class AlgorithmSchemeBuilder {
 
     private static final List<String> TMP_CONNECTOR = ImmutableList.of("T", "M", "P", "D");
     private static final List<String> START_TERMINATOR = Collections.singletonList("Start");
-    private static final List<String> END_TERMINATOR = Collections.singletonList("End");
+    private static final List<String> END_TERMINATOR = Collections.singletonList("Stop");
 
     protected final String name;
     protected final LinkedList<Block> blocks = new LinkedList<>();

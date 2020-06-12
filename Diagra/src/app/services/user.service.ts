@@ -8,6 +8,7 @@ import {flatMap, map, switchMap} from "rxjs/operators";
 export class User {
   userName: string;
   email: string;
+  password: string
 }
 
 @Injectable({
@@ -42,6 +43,23 @@ export class UserService {
     return this.authService.headers().pipe(
       switchMap(http => this.httpClient.get(UserService.USER_API_URL, {headers: http})),
       map(user => user as User)
+    );
+  }
+
+  public deleteUser(): void {
+    this.authService.headers().pipe(
+      switchMap(http => this.httpClient.delete(UserService.USER_API_URL, {headers: http})),
+    ).subscribe((data) => this.authService.logout());
+  }
+
+  public updateUser(user: User): Observable<User> {
+    return this.authService.headers().pipe(
+      switchMap(http => this.httpClient.put(UserService.USER_API_URL, JSON.stringify(user).toString(), {headers: http.set("Content-Type", "application/json")})),
+      map(user => user as User),
+      map(data => {
+        this.authService.loginUser(user.userName, user.password);
+        return data;
+      })
     );
   }
 

@@ -23,7 +23,7 @@ import {SignInComponent} from './sign-in/sign-in.component';
 import {SignUpComponent} from './sign-up/sign-up.component';
 import {MatDialogModule, MatDialogRef} from "@angular/material/dialog";
 import {MatCardModule} from "@angular/material/card";
-import {ReactiveFormsModule} from "@angular/forms";
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {HttpClientModule} from '@angular/common/http';
 import {GraphComponent} from './graph/graph.component';
 import {CodeComponent} from './code/code.component';
@@ -32,6 +32,10 @@ import {NgxResizableModule} from '@3dgenomes/ngx-resizable';
 import {UnionComponent} from './union/union.component';
 import { HelpComponent } from './help/help.component';
 import { HomeComponent } from './home/home.component';
+import { DocumentsComponent } from './documents/documents.component';
+import { DocumentComponent } from './documents/document/document.component';
+import { AccountComponent } from './account/account.component';
+import { ConfirmationComponent } from './account/confirmation/confirmation.component';
 
 @NgModule({
   declarations: [
@@ -45,31 +49,36 @@ import { HomeComponent } from './home/home.component';
     UnionComponent,
     HelpComponent,
     HomeComponent,
+    DocumentsComponent,
+    DocumentComponent,
+    AccountComponent,
+    ConfirmationComponent,
   ],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    MatAutocompleteModule,
-    MatCheckboxModule,
-    MatDatepickerModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatRadioModule,
-    MatSelectModule,
-    MatSliderModule,
-    MatSidenavModule,
-    MatToolbarModule,
-    MatDialogModule,
-    MatIconModule,
-    MatButtonModule,
-    MatListModule,
-    BrowserAnimationsModule,
-    MatCardModule,
-    ReactiveFormsModule,
-    HttpClientModule,
-    NgxResizableModule,
-    CodeEditorModule.forRoot()
-  ],
+    imports: [
+        BrowserModule,
+        AppRoutingModule,
+        MatAutocompleteModule,
+        MatCheckboxModule,
+        MatDatepickerModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatRadioModule,
+        MatSelectModule,
+        MatSliderModule,
+        MatSidenavModule,
+        MatToolbarModule,
+        MatDialogModule,
+        MatIconModule,
+        MatButtonModule,
+        MatListModule,
+        BrowserAnimationsModule,
+        MatCardModule,
+        ReactiveFormsModule,
+        HttpClientModule,
+        NgxResizableModule,
+        CodeEditorModule.forRoot(),
+        FormsModule
+    ],
   providers: [{provide: MatDialogRef, useValue: {}}],
   bootstrap: [AppComponent]
 })

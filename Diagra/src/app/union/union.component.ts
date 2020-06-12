@@ -5,6 +5,7 @@ import {Constant} from "../ constant";
 import {EventListener} from "../services/EventMgr";
 import {IERequest, IeService, Link} from "../services/ie.service";
 import {throwError} from "rxjs";
+import {ActivatedRoute} from "@angular/router";
 
 @Component({
   selector: 'app-union',
@@ -12,6 +13,8 @@ import {throwError} from "rxjs";
   styleUrls: ['./union.component.scss']
 })
 export class UnionComponent implements OnInit {
+
+  private id;
 
   constructor(private ie: IeService) {
   }

@@ -14,6 +14,8 @@ public interface UserManager extends BaseManager<String, UserEntity> {
 
     ListenableFuture<UserEntity> loginUser(String id);
 
+    ListenableFuture<UserEntity> updateUser(UserEntity userEntity);
+
     ListenableFuture<UserEntity> registerUser(UserEntity userEntity);
 
     ListenableFuture<Collection<UserEntity>> getUsers();

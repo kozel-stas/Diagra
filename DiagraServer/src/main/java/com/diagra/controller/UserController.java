@@ -1,5 +1,6 @@
 package com.diagra.controller;
 
+import com.diagra.dao.model.UserEntity;
 import com.diagra.dto.UserDto;
 import com.diagra.logic.algorithm.AlgorithmSchemeManager;
 import com.diagra.mapper.UserMapper;
@@ -59,6 +60,20 @@ public class UserController {
                 });
             }
         });
+        return deferredResult;
+    }
+
+    @RequestMapping(
+            method = {RequestMethod.PUT},
+            consumes = {MediaType.APPLICATION_JSON_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    public DeferredResult<ResponseEntity<UserDto>> update(OAuth2Authentication user, @RequestBody @Valid @Validated(value = {PasswordValidationGroup.class}) UserDto userDto) {
+        String userID = AuthUtil.getUserId(user);
+        CustomDeferredResult<ResponseEntity<UserDto>> deferredResult = new CustomDeferredResult<>();
+        UserEntity userEntity = userMapper.fromDto(userDto);
+        userEntity.setId(userID);
+        userManager.updateUser(userEntity).addCallback(new MappedResponseCallback<>(deferredResult, userMapper));
         return deferredResult;
     }
 

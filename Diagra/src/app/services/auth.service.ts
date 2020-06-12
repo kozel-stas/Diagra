@@ -69,7 +69,7 @@ export class AuthService {
   }
 
   public headers(): Observable<HttpHeaders> {
-    if (new Date().getTime() - 5000 > this.authData.date + this.authData.expires_in * 1000) {
+    if ((new Date().getTime() - 5000 > this.authData.date + this.authData.expires_in * 1000) || !this.authData.access_token) {
       if (this.authData && this.authData.refresh_token) {
         let body = new URLSearchParams();
         body.set('grant_type', "refresh_token");
