@@ -9,6 +9,7 @@ import java.util.Map;
 
 public class BaseBlock implements Block, MetaInfo {
 
+    private String id;
     private BlockType blockType;
     private List<String> text;
     private Map<String, String> metaInfo;
@@ -25,8 +26,8 @@ public class BaseBlock implements Block, MetaInfo {
     }
 
     @Override
-    public String getText() {
-        return String.join("\n", text);
+    public List<String> getText() {
+        return text;
     }
 
     @Override
@@ -44,6 +45,14 @@ public class BaseBlock implements Block, MetaInfo {
 
     public void setMetaInfo(Map<String, String> metaInfo) {
         this.metaInfo = new HashMap<>(metaInfo);
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getId() {
+        return id;
     }
 
     @Override

@@ -1,4 +1,6 @@
 import {mxgraphFactory} from 'ts-mxgraph';
+import {mxgraph} from "ts-mxgraph-typings";
+import mxGraph = mxgraph.mxGraph;
 
 type MxGraphProperty =
   | 'mxCellRenderer'
@@ -36,6 +38,8 @@ type MxGraphProperty =
 export class MxGraphServiceFactory {
   private static instance: MxGraphServiceFactory = null;
 
+  graph: mxgraph.mxGraph;
+
   private constructor(private readonly mxGraphLib: any) {
   }
 
@@ -48,6 +52,14 @@ export class MxGraphServiceFactory {
       MxGraphServiceFactory.instance = new MxGraphServiceFactory(mxGraphLib);
     }
     return MxGraphServiceFactory.instance;
+  }
+
+  public static setGraph(graph: mxgraph.mxGraph): void{
+    this.getInstance().graph = graph;
+  }
+
+  public static getGraph(): mxgraph.mxGraph{
+    return this.getInstance().graph;
   }
 
   public static getMxGraphProperty(propertyName: MxGraphProperty): any {

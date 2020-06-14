@@ -9,19 +9,24 @@
     <h3 style="font-size: 18px;"> Main Account </h3>
     <mat-form-field [formGroup]="mainForm" class="form">
       <mat-label>User name</mat-label>
-      <input matInput placeholder="User name" [(ngModel)]="userName" value="{{userName}}" formControlName="username"/>
+      <input autocomplete="off" matInput placeholder="User name" [(ngModel)]="userName" value="{{userName}}" formControlName="username"/>
     </mat-form-field>
     <mat-form-field [formGroup]="mainForm" class="form">
       <mat-label>Email</mat-label>
-      <input matInput placeholder="Email" [(ngModel)]="email" value="{{email}}" formControlName="email"/>
+      <input autocomplete="off" matInput placeholder="Email" [(ngModel)]="email" value="{{email}}" formControlName="email"/>
     </mat-form-field>
     <mat-form-field [formGroup]="mainForm" class="form">
       <mat-label>Password</mat-label>
-      <input type="password" matInput [(ngModel)]="password" placeholder="Password" formControlName="password"/>
+      <input autocomplete="off" type="password" matInput [(ngModel)]="password" placeholder="Password" formControlName="password"/>
     </mat-form-field>
-    <mat-form-field [formGroup]="mainForm" class="form">
+    <mat-checkbox [(ngModel)]="updatePassword" class="checkbox">Change password</mat-checkbox>
+    <mat-form-field [formGroup]="mainForm" class="form" *ngIf="updatePassword">
+      <mat-label>New password</mat-label>
+      <input autocomplete="off" type="password" matInput [(ngModel)]="newPassword" placeholder="New password" formControlName="password"/>
+    </mat-form-field>
+    <mat-form-field [formGroup]="mainForm" class="form" *ngIf="updatePassword">
       <mat-label>Confirm password</mat-label>
-      <input type="password" matInput [(ngModel)]="confirmPassword" placeholder="Confirm password" formControlName="password"/>
+      <input autocomplete="off" type="password" matInput [(ngModel)]="confirmPassword" placeholder="Confirm password" formControlName="password"/>
     </mat-form-field>
     <button mat-button color="primary" class="sub_button" (click)="save()">Save</button>
     <button mat-button color="warn" class="sub_button" (click)="delete()">Delete</button>

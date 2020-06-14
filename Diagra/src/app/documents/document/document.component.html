@@ -1,5 +1,5 @@
 <div class="thumbnail" (click)="select()" [ngStyle]="{'background': (selected) ? 'antiquewhite' : 'none'}">
-  <h1 class="stats" style="cursor: pointer;">{{name}}</h1>
+  <h1 class="stats" style="cursor: pointer;">{{document.name}}</h1>
   <img style="width: 15%;height: 15%;" src="assets/file.png" alt="">
-  <p>{{description}}</p>
+  <p>{{document.description}}</p>
 </div>

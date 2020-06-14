@@ -5,11 +5,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 
-public abstract class DefaultResponseCallback<T> implements ListenableFutureCallback<T> {
+public abstract class DefaultResponseCallback<T, E> implements ListenableFutureCallback<T> {
 
-    protected final CustomDeferredResult<ResponseEntity<?>> customDeferredResult;
+    protected final CustomDeferredResult<ResponseEntity<E>> customDeferredResult;
 
-    public DefaultResponseCallback(CustomDeferredResult<ResponseEntity<?>> customDeferredResult) {
+    public DefaultResponseCallback(CustomDeferredResult<ResponseEntity<E>> customDeferredResult) {
         this.customDeferredResult = customDeferredResult;
     }
 

@@ -1,18 +1,37 @@
 package com.diagra.mapper;
 
 import com.diagra.model.Block;
-import org.mapstruct.Mapper;
-import org.mapstruct.ReportingPolicy;
+import com.diagra.model.BaseBlock;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Collections;
 
-//@Mapper(componentModel = "spring", unmappedSourcePolicy = ReportingPolicy.IGNORE, unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public abstract class BlockMapper implements EntityMapper<Block, com.diagra.dao.model.Block> {
+@Service
+public class BlockMapper implements EntityMapper<Block, com.diagra.dao.model.Block> {
+
+    private final BlockTypeMapper blockTypeMapper;
+
+    public BlockMapper(BlockTypeMapper blockTypeMapper) {
+        this.blockTypeMapper = blockTypeMapper;
+    }
 
     @Override
-    public abstract Block toDto(com.diagra.dao.model.Block entity);
+    public Block toDto(com.diagra.dao.model.Block entity) {
+        return new BaseBlock(
+                blockTypeMapper.toDto(entity.blockType()),
+                entity.getText(),
+                entity.metaInfo()
+        );
+    }
 
     @Override
-    public abstract com.diagra.dao.model.Block fromDto(Block dto) throws IOException;
+    public com.diagra.dao.model.Block fromDto(Block dto) throws IOException {
+        return new com.diagra.dao.model.BaseBlock(
+                blockTypeMapper.fromDto(dto.blockType()),
+                dto.commands(),
+                dto.metaInfo()
+        );
+    }
 
 }

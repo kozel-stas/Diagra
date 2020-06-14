@@ -1,9 +1,12 @@
 package com.diagra.dao.model;
 
-public interface Block {
+import java.util.List;
 
-    String getText();
+public interface Block extends MetaInfo {
+
+    List<String> getText();
 
     BlockType blockType();
 
+    String getId();
 }

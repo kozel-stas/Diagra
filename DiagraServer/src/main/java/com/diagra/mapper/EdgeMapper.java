@@ -1,18 +1,43 @@
 package com.diagra.mapper;
 
+import com.diagra.model.BaseEdge;
 import com.diagra.model.Edge;
-import org.mapstruct.Mapper;
-import org.mapstruct.ReportingPolicy;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
 
-//@Mapper(componentModel = "spring", unmappedSourcePolicy = ReportingPolicy.IGNORE, unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public abstract class EdgeMapper implements EntityMapper<Edge, com.diagra.dao.model.Edge> {
+@Service
+public class EdgeMapper implements EntityMapper<Edge, com.diagra.dao.model.Edge> {
+
+    private final BlockMapper blockMapper;
+    private final EdgeTypeMapper edgeTypeMapper;
+
+    public EdgeMapper(BlockMapper blockMapper, EdgeTypeMapper edgeTypeMapper) {
+        this.blockMapper = blockMapper;
+        this.edgeTypeMapper = edgeTypeMapper;
+    }
 
     @Override
-    public abstract Edge toDto(com.diagra.dao.model.Edge entity);
+    public Edge toDto(com.diagra.dao.model.Edge entity) {
+        return new BaseEdge(
+                edgeTypeMapper.toDto(entity.edgeType()),
+                entity.text(),
+                blockMapper.toDto(entity.source()),
+                blockMapper.toDto(entity.target())
+        );
+    }
 
     @Override
-    public abstract com.diagra.dao.model.Edge fromDto(Edge dto) throws IOException;
+    public com.diagra.dao.model.Edge fromDto(Edge dto) throws IOException {
+        return new com.diagra.dao.model.BaseEdge(
+                edgeTypeMapper.fromDto(dto.edgeType()),
+                dto.text(),
+                blockMapper.fromDto(dto.source()),
+                blockMapper.fromDto(dto.target()),
+                new HashMap<>()
+        );
+    }
 
 }

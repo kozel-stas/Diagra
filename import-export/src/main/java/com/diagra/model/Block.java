@@ -1,6 +1,7 @@
 package com.diagra.model;
 
 import java.util.List;
+import java.util.Map;
 
 public interface Block {
 
@@ -9,6 +10,8 @@ public interface Block {
     List<String> commands();
 
     BlockType blockType();
+
+    Map<String, String> metaInfo();
 
 
 }

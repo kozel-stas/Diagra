@@ -15,6 +15,9 @@ public class UserDto {
     @NotNull(groups = PasswordValidationGroup.class)
     private String password;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String newPassword;
+
     public void setUserName(String userName) {
         this.userName = userName;
     }
@@ -37,6 +40,14 @@ public class UserDto {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public void setNewPassword(String newPassword) {
+        this.newPassword = newPassword;
+    }
+
+    public String getNewPassword() {
+        return newPassword;
     }
 
 }

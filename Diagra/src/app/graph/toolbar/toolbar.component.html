@@ -1,0 +1,24 @@
+<div class="right_menu">
+  <div class="button_block">
+    <button mat-button color="primary" (click)="save()" class="sub_button">Save</button>
+  </div>
+  <button mat-button color="primary" class="group_button" (click)="importBar = !importBar">
+    <mat-icon *ngIf="importBar">menu</mat-icon>
+    <mat-icon *ngIf="!importBar">menu_open</mat-icon>
+    Import diagram
+  </button>
+  <div class="button_block" *ngIf="importBar">
+    <button mat-button color="primary" class="sub_button">Visio</button>
+    <button mat-button color="primary" class="sub_button">Draw io</button>
+  </div>
+  <button mat-button color="primary" class="group_button" (click)="exportBar = !exportBar">
+    <mat-icon *ngIf="exportBar">menu</mat-icon>
+    <mat-icon *ngIf="!exportBar">menu_open</mat-icon>
+    Export diagram
+  </button>
+  <div class="button_block" *ngIf="exportBar">
+    <button mat-button color="primary" class="sub_button" (click)="toPng()">PNG</button>
+    <button mat-button color="primary" class="sub_button">JPG</button>
+    <button mat-button color="primary" class="sub_button">PDF</button>
+  </div>
+</div>

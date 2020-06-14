@@ -9,6 +9,8 @@ public interface AlgorithmSchemeManager {
 
     ListenableFuture<List<AlgorithmScheme>> get(String userID);
 
+    ListenableFuture<AlgorithmScheme> get(String userID, String id);
+
     ListenableFuture<AlgorithmScheme> store(AlgorithmScheme algorithmScheme);
 
     ListenableFuture<AlgorithmScheme> update(AlgorithmScheme algorithmScheme);

@@ -2,8 +2,10 @@ package com.diagra;
 
 import com.diagra.source.java.JavaSourceConverterService;
 import com.diagra.xml.MXGraphXmlConverter;
+import com.diagra.xml.XmlRepresentationConverter;
 import com.google.common.collect.ImmutableList;
 import org.jgrapht.Graph;
+import org.jgrapht.GraphPath;
 import org.jgrapht.alg.interfaces.ShortestPathAlgorithm;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultDirectedGraph;
@@ -21,8 +23,8 @@ public class ImportExportManagerImpl implements ImportExportManager {
     private final List<ConverterService> services;
     private final Graph<ResourceType, ServiceEdge> graph;
 
-    public ImportExportManagerImpl(JavaSourceConverterService javaSourceConverterService, MXGraphXmlConverter mxGraphXmlConverter) {
-        this.services = ImmutableList.of(javaSourceConverterService, mxGraphXmlConverter);
+    public ImportExportManagerImpl(XmlRepresentationConverter xmlRepresentationConverter, JavaSourceConverterService javaSourceConverterService, MXGraphXmlConverter mxGraphXmlConverter) {
+        this.services = ImmutableList.of(javaSourceConverterService, mxGraphXmlConverter, xmlRepresentationConverter);
         this.graph = new AsSynchronizedGraph<>(constructGraph(services));
     }
 
@@ -43,7 +45,11 @@ public class ImportExportManagerImpl implements ImportExportManager {
     private List<ConverterService> serviceChain(ResourceType source, ResourceType target) throws IllegalStateException {
         List<ConverterService> chain = new LinkedList<>();
         ShortestPathAlgorithm<ResourceType, ServiceEdge> shortestPath = new DijkstraShortestPath<>(graph);
-        for (ServiceEdge serviceEdge : shortestPath.getPath(source, target).getEdgeList()) {
+        GraphPath<ResourceType, ImportExportManagerImpl.ServiceEdge> graphPath = shortestPath.getPath(source, target);
+        if (graphPath == null) {
+            return chain;
+        }
+        for (ServiceEdge serviceEdge : graphPath.getEdgeList()) {
             chain.add(serviceEdge.getService());
         }
         return chain;

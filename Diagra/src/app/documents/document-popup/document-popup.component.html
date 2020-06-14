@@ -1,0 +1,16 @@
+<div mat-dialog-content style="text-align: center;">
+  <mat-form-field [formGroup]="mainForm" class="form">
+    <mat-label>Diagram name</mat-label>
+    <input autocomplete="off" matInput placeholder="Diagram name" [(ngModel)]="name" formControlName="name"/>
+  </mat-form-field>
+  <mat-form-field [formGroup]="mainForm" class="form">
+    <mat-label>Description</mat-label>
+    <textarea autocomplete="off" matInput placeholder="Diagram description" [(ngModel)]="description" formControlName="description"
+              cdkTextareaAutosize #autosize="cdkTextareaAutosize" cdkAutosizeMinRows="1"
+              cdkAutosizeMaxRows="10"></textarea>
+  </mat-form-field>
+</div>
+<div mat-dialog-actions>
+  <button style="width: 48%; background: tomato" (click)="onNoClick()" mat-button>Decline</button>
+  <button style="width: 48%" mat-button (click)="onYesClick()" cdkFocusInitial>Create</button>
+</div>

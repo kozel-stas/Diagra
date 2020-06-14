@@ -27,6 +27,7 @@ export class CodeComponent implements OnInit {
   }
 
   private codeValue;
+  loaded = false;
 
   template = [
     `public class Main {`,

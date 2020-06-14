@@ -36,13 +36,13 @@ public class UserController {
     @RequestMapping(
             method = {RequestMethod.DELETE}
     )
-    public DeferredResult<ResponseEntity<?>> delete(OAuth2Authentication user) {
+    public DeferredResult<ResponseEntity<Object>> delete(OAuth2Authentication user) {
         String userID = AuthUtil.getUserId(user);
-        CustomDeferredResult<ResponseEntity<?>> deferredResult = new CustomDeferredResult<>();
+        CustomDeferredResult<ResponseEntity<Object>> deferredResult = new CustomDeferredResult<>();
         algorithmSchemeManager.delete(userID).addCallback(new ListenableFutureCallback<Void>() {
             @Override
             public void onFailure(Throwable throwable) {
-                userManager.deleteUser(userID).addCallback(new DefaultResponseCallback<Void>(deferredResult) {
+                userManager.deleteUser(userID).addCallback(new DefaultResponseCallback<Void, Object>(deferredResult) {
                     @Override
                     public void onSuccess(Void aVoid) {
                         deferredResult.setResult(ResponseEntity.ok().build());
@@ -52,7 +52,7 @@ public class UserController {
 
             @Override
             public void onSuccess(Void aVoid) {
-                userManager.deleteUser(userID).addCallback(new DefaultResponseCallback<Void>(deferredResult) {
+                userManager.deleteUser(userID).addCallback(new DefaultResponseCallback<Void, Object>(deferredResult) {
                     @Override
                     public void onSuccess(Void aVoid) {
                         deferredResult.setResult(ResponseEntity.ok().build());
@@ -73,7 +73,7 @@ public class UserController {
         CustomDeferredResult<ResponseEntity<UserDto>> deferredResult = new CustomDeferredResult<>();
         UserEntity userEntity = userMapper.fromDto(userDto);
         userEntity.setId(userID);
-        userManager.updateUser(userEntity).addCallback(new MappedResponseCallback<>(deferredResult, userMapper));
+        userManager.updateUser(userEntity, userDto.getNewPassword()).addCallback(new MappedResponseCallback<>(deferredResult, userMapper));
         return deferredResult;
     }
 

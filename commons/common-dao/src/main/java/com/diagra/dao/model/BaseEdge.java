@@ -1,11 +1,12 @@
 package com.diagra.dao.model;
 
 import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class BaseEdge implements Edge, MetaInfo {
+public class BaseEdge implements Edge {
 
     private EdgeType edgeType;
     private String text;

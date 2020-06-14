@@ -26,6 +26,17 @@ public class AlgorithmSchemeManagerImpl implements AlgorithmSchemeManager {
         return taskExecutor.submitListenable(() -> algorithmRepository.findAlgorithmSchemeByOwnerID(userID));
     }
 
+
+    public ListenableFuture<AlgorithmScheme> get(String userID, String id) {
+        return taskExecutor.submitListenable(() -> {
+            AlgorithmScheme algorithmScheme = algorithmRepository.findById(id).orElse(null);
+            if (algorithmScheme == null || !algorithmScheme.getOwnerID().equals(userID)) {
+                throw new AccessDeniedException("Not found.");
+            }
+            return algorithmScheme;
+        });
+    }
+
     @Override
     public ListenableFuture<AlgorithmScheme> store(AlgorithmScheme algorithmScheme) {
         return taskExecutor.submitListenable(() -> algorithmRepository.insert(algorithmScheme));

@@ -14,8 +14,8 @@
       Create diagram
     </button>
     <div class="button_block" *ngIf="createGroup">
-      <button mat-button color="primary" class="sub_button">Create new diagram</button>
-      <button mat-button color="primary" class="sub_button">Import from source code</button>
+      <button mat-button color="primary" (click)="new('simple')" class="sub_button">Create new diagram</button>
+      <button mat-button color="primary" (click)="new('code')" class="sub_button">Import from source code</button>
     </div>
     <button mat-button color="primary" class="group_button" (click)="editGroup = !editGroup">
       <mat-icon *ngIf="editGroup">menu</mat-icon>
@@ -23,8 +23,8 @@
       Manage diagrams
     </button>
     <div class="button_block" *ngIf="editGroup">
-      <button mat-button color="primary" class="sub_button">Edit</button>
-      <button mat-button color="warn" class="sub_button">Delete</button>
+      <button mat-button color="primary" class="sub_button" (click)="edit()">Edit</button>
+      <button mat-button color="warn" class="sub_button" (click)="remove()">Delete</button>
     </div>
   </div>
 </div>

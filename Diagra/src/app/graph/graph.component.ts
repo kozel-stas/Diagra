@@ -5,6 +5,8 @@ import {Constant} from "../ constant";
 import {EventListener} from "../services/EventMgr";
 import {Comment, CycleEnd, CycleStart, Data, PredefinedProcess, Terminator} from "./shapes/shapes";
 import {Layout} from "./layout";
+import {Document, DocumentService} from "../services/document.service";
+import {IeService, Link} from "../services/ie.service";
 
 @Component({
   selector: 'app-graph',
@@ -30,9 +32,9 @@ export class GraphComponent implements OnInit {
   private static mxOutline: typeof mxgraph.mxOutline = MxGraphServiceFactory.getMxGraphProperty("mxOutline");
 
   graph: mxgraph.mxGraph;
+  private doc: Document;
 
-  constructor() {
-
+  constructor(private ds: DocumentService, private ie: IeService) {
   }
 
   ngOnInit(): void {
@@ -50,10 +52,21 @@ export class GraphComponent implements OnInit {
       GraphComponent.initCustomShapes();
       Constant.EVENT_MGR.subscribe("graph_update", <EventListener>{
         fireEvent: (obj) => {
-          this.fromXml(obj.xml);
+          this.fromXml(obj.xml, obj.unsort);
         }
       });
+      this.doc = this.ds.resolveTransfer();
+      if (this.doc && this.doc.transitionLink && this.doc.id) {
+        this.ie.resolve(new Link(this.doc.transitionLink)).subscribe(file => {
+          let reader = new FileReader();
+          reader.onload = function () {
+            Constant.EVENT_MGR.fireEvent("graph_update", {xml: reader.result.toString(), unsort: false})
+          };
+          reader.readAsText(file);
+        });
+      }
     }
+    MxGraphServiceFactory.setGraph(this.graph);
   }
 
   private initEdit(graph: mxgraph.mxGraph) {
@@ -216,7 +229,7 @@ export class GraphComponent implements OnInit {
     MxGraphServiceFactory.getMxGraphProperty('mxCellRenderer').registerShape('terminator', Terminator);
   }
 
-  private fromXml(xml: string): void {
+  private fromXml(xml: string, unsort: boolean): void {
     this.graph.getModel().beginUpdate();
     try {
       this.graph.removeCells(this.graph.getChildVertices(this.graph.getDefaultParent()))
@@ -226,7 +239,9 @@ export class GraphComponent implements OnInit {
     let xmlDom = MxGraphServiceFactory.getMxGraphProperty("mxUtils").parseXml(xml);
     let codec = new GraphComponent.mxCodec(xmlDom);
     codec.decode(xmlDom.documentElement, this.graph.getModel());
-    this.sort();
+    if (!unsort) {
+      this.sort();
+    }
   }
 
   private sort() {
@@ -235,6 +250,7 @@ export class GraphComponent implements OnInit {
       let cell = this.graph.getModel().cells[i];
       if (cell.getStyle() && cell.getStyle().includes("shape=comment")) {
         cells.push(cell);
+        this.graph.updateCellSize(cell, true);
       }
     }
     let edges = [];
@@ -256,18 +272,114 @@ export class GraphComponent implements OnInit {
         if (cells.includes(edge.source) || cells.includes(edge.target)) {
           let comment = cells.includes(edge.source) ? edge.source : edge.target;
           let source = cells.includes(edge.source) ? edge.target : edge.source;
-          console.log(source.getGeometry().getCenterX() + (source.getGeometry().width / 2));
           this.graph.moveCells(
             [comment],
             (source.getGeometry().getCenterX() + (source.getGeometry().width / 2)),
             source.getGeometry().getCenterY() - comment.getGeometry().height / 2,
             false
           );
-          // this.graph.addEdge(edge, this.graph.getDefaultParent());
+          this.graph.addEdge(edge, this.graph.getDefaultParent());
+        }
+      }
+    } finally {
+      this.graph.getModel().endUpdate();
+    }
+
+    this.graph.getModel().beginUpdate();
+    try {
+      for (let i = 0; i < Object.getOwnPropertyNames(this.graph.getModel().cells).length; i++) {
+        let cell = this.graph.getModel().cells[i];
+        if (cell.isEdge() && !(cell.target.getStyle() && cell.target.getStyle().includes("shape=comment")) && cell.source.geometry.getCenterX() != cell.target.geometry.getCenterX()) {
+          this.graph.getModel().remove(cell);
+          let edge = this.graph.insertEdge(cell.getParent(), null, cell.getValue(), cell.source, cell.target, null);
+          edge.geometry.points = [
+            new GraphComponent.mxPoint(
+              cell.source.geometry.getCenterX(),
+              cell.target.geometry.getCenterY() - cell.target.geometry.height / 2 - this.getSourceOffset(edge)
+            ),
+            new GraphComponent.mxPoint(
+              cell.target.geometry.getCenterX(),
+              cell.target.geometry.getCenterY() - cell.target.geometry.height / 2 - this.getSourceOffset(edge)
+            )
+          ];
+          this.fixPoints(edge, cell);
+        } else if (cell.isEdge()) {
+          console.log(cell)
+          this.fixPoints(cell, cell);
         }
       }
     } finally {
       this.graph.getModel().endUpdate();
     }
   }
+
+  private fixPoints(edge: mxgraph.mxCell, cell: mxgraph.mxCell) {
+    let offset = 40;
+    let intersect = this.isIntersect(edge);
+    while (intersect) {
+      edge.geometry.points = [
+        new GraphComponent.mxPoint(
+          cell.source.geometry.getCenterX(),
+          cell.source.geometry.getCenterY() + cell.source.geometry.height / 2 + 40
+        ),
+        new GraphComponent.mxPoint(
+          cell.source.geometry.getCenterX() + offset,
+          cell.source.geometry.getCenterY() + cell.source.geometry.height / 2 + 40
+        ),
+        new GraphComponent.mxPoint(
+          cell.source.geometry.getCenterX() + offset,
+          cell.target.geometry.getCenterY() - cell.target.geometry.height / 2 - this.getOffset(edge)
+        ),
+        new GraphComponent.mxPoint(
+          cell.target.geometry.getCenterX(),
+          cell.target.geometry.getCenterY() - cell.target.geometry.height / 2 - this.getOffset(edge)
+        )
+      ];
+      offset += 40;
+      intersect = this.isIntersect(edge);
+    }
+  }
+
+  private getOffset(cell: mxgraph.mxCell): number {
+    if (cell.target) {
+      let offset = cell.target.edges.filter(data => data.target == cell.target).indexOf(cell);
+      if (40 - 5 * offset < 5) {
+        return 40;
+      } else {
+        return 40 - 5 * offset;
+      }
+    }
+    return 40;
+  }
+
+  private getSourceOffset(cell: mxgraph.mxCell): number {
+    if (cell.source) {
+      let offset = cell.source.edges.filter(data => data.source == cell.source).indexOf(cell);
+      if (40 - 5 * offset < 5) {
+        return 40;
+      } else {
+        return 40 - 5 * offset;
+      }
+    }
+    return 40;
+  }
+
+  private isIntersect(edge: mxgraph.mxCell): mxgraph.mxCell {
+    for (let i = 0; i < Object.getOwnPropertyNames(this.graph.getModel().cells).length; i++) {
+      let cell = this.graph.getModel().cells[i];
+      if (cell && cell.isVertex()) {
+        let points = edge.geometry.points ? [edge.source.geometry, ...edge.geometry.points, edge.target.geometry] : [edge.source.geometry, edge.target.geometry];
+        let previous = null;
+        for (let point of points) {
+          if ((point.x < cell.geometry.x + cell.geometry.width && point.x > cell.geometry.x)
+            && previous && previous.y < cell.geometry.y && point.y >= cell.geometry.y) {
+            return cell;
+          }
+          previous = point;
+        }
+      }
+    }
+    return null;
+  }
+
 }

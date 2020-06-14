@@ -1,5 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {DocumentsComponent} from "../documents.component";
+import {Document} from "../../services/document.service";
 
 @Component({
   selector: 'app-document',
@@ -8,9 +9,7 @@ import {DocumentsComponent} from "../documents.component";
 })
 export class DocumentComponent implements OnInit {
 
-  id = null;
-  name = null;
-  description = null;
+  document: Document;
   selected = false;
   parent: DocumentsComponent = null;
 

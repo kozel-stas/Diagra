@@ -3,10 +3,7 @@ package com.diagra.dao.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
-import org.springframework.data.mongodb.core.mapping.FieldType;
-import org.springframework.data.mongodb.core.mapping.MongoId;
+import org.springframework.data.mongodb.core.mapping.*;
 
 import java.util.*;
 
@@ -99,6 +96,41 @@ public class AlgorithmScheme {
 
     public void setEdges(List<Edge> edges) {
         this.edges = new ArrayList<>(edges);
+        int i = 0;
+        Map<Block, String> map = new HashMap<>();
+        Map<String, Block> mapping = new HashMap<>();
+        for (Edge edge : this.edges) {
+            if (edge.source().getId() == null) {
+                ((BaseBlock) edge.source()).setId(i++ + "");
+                map.putIfAbsent(edge.source(), edge.source().getId());
+                ((BaseBlock) edge.source()).setId(map.get(edge.source()));
+            } else {
+                mapping.putIfAbsent(edge.source().getId(), edge.source());
+            }
+            if (edge.target().getId() == null) {
+                ((BaseBlock) edge.target()).setId(i++ + "");
+                map.putIfAbsent(edge.target(), edge.target().getId());
+                ((BaseBlock) edge.target()).setId(map.get(edge.target()));
+            } else {
+                mapping.putIfAbsent(edge.target().getId(), edge.target());
+            }
+        }
+        for (Map.Entry<Block, String> entry : map.entrySet()) {
+            mapping.putIfAbsent(entry.getValue(), entry.getKey());
+        }
+        List<Edge> list = new ArrayList<>();
+        for (Edge edge : this.edges) {
+            list.add(
+                    new BaseEdge(
+                            edge.edgeType(),
+                            edge.text(),
+                            mapping.get(edge.source().getId()),
+                            mapping.get(edge.target().getId()),
+                            edge.metaInfo()
+                    )
+            );
+        }
+        this.edges = list;
     }
 
     public void setName(String name) {

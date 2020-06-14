@@ -16,8 +16,11 @@ export class AccountComponent implements OnInit {
   userName;
   email;
   password;
+  newPassword;
   confirmPassword;
   mainForm: FormGroup;
+
+  updatePassword = false;
 
   constructor(private us: UserService, private formBuilder: FormBuilder, private dialog: MatDialog) {
     this.mainForm = new FormGroup({
@@ -44,13 +47,14 @@ export class AccountComponent implements OnInit {
   }
 
   save(): void {
-    if (!this.mainForm.valid || this.password != this.confirmPassword) {
+    if (!this.mainForm.valid || (this.updatePassword && this.newPassword != this.confirmPassword)) {
       return;
     }
     let user = new User();
     user.email = this.email;
     user.userName = this.userName;
     user.password = this.password;
+    user.newPassword = this.newPassword;
     this.us.updateUser(user).subscribe((data) => {
       this.userName = data.userName;
       this.email = data.email;

@@ -36,6 +36,9 @@ import { DocumentsComponent } from './documents/documents.component';
 import { DocumentComponent } from './documents/document/document.component';
 import { AccountComponent } from './account/account.component';
 import { ConfirmationComponent } from './account/confirmation/confirmation.component';
+import { DocumentPopupComponent } from './documents/document-popup/document-popup.component';
+import { ToolbarComponent } from './graph/toolbar/toolbar.component';
+import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
 
 @NgModule({
   declarations: [
@@ -53,6 +56,8 @@ import { ConfirmationComponent } from './account/confirmation/confirmation.compo
     DocumentComponent,
     AccountComponent,
     ConfirmationComponent,
+    DocumentPopupComponent,
+    ToolbarComponent,
   ],
     imports: [
         BrowserModule,
@@ -77,7 +82,8 @@ import { ConfirmationComponent } from './account/confirmation/confirmation.compo
         HttpClientModule,
         NgxResizableModule,
         CodeEditorModule.forRoot(),
-        FormsModule
+        FormsModule,
+        MatProgressSpinnerModule
     ],
   providers: [{provide: MatDialogRef, useValue: {}}],
   bootstrap: [AppComponent]

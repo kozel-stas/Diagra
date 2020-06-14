@@ -503,6 +503,10 @@ footer {
   width: 25vw;
 }
 
+.checkbox{
+  font-size: 18px;
+}
+
 .sub_button {
   position: center;
   display: flex;
@@ -517,7 +521,7 @@ footer {
 .main {
   position: absolute;
   width: 50vw;
-  height: 50vh;
+  height: 60vh;
   overflow: hidden;
   left: 25vw;
 }

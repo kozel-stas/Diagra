@@ -1,6 +1,7 @@
 package com.diagra.dao.model;
 
-public interface Edge {
+
+public interface Edge extends MetaInfo {
 
     EdgeType edgeType();
 

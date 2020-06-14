@@ -2,6 +2,7 @@ package com.diagra.logic.user;
 
 import com.diagra.dao.manager.BaseManagerImpl;
 import com.diagra.dao.model.UserEntity;
+import com.diagra.logic.exceptions.AccessDeniedException;
 import com.diagra.logic.exceptions.UserDuplicateException;
 import com.diagra.logic.exceptions.UserNotFoundException;
 import org.springframework.core.task.AsyncListenableTaskExecutor;
@@ -11,6 +12,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.util.concurrent.ListenableFuture;
 
 import java.util.Collection;
@@ -50,10 +52,18 @@ public class UserManagerImpl extends BaseManagerImpl<String, UserEntity> impleme
     }
 
     @Override
-    public ListenableFuture<UserEntity> updateUser(UserEntity userEntity) {
+    public ListenableFuture<UserEntity> updateUser(UserEntity userEntity, String newPassword) {
         return asyncListenableTaskExecutor.submitListenable(() -> {
             try {
-                userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
+                UserEntity loaded = repository.findById(userEntity.getId()).orElseThrow(() -> new UserNotFoundException(userEntity.getId()));
+                if (!passwordEncoder.matches(userEntity.getPassword(), loaded.getPassword())) {
+                    throw new AccessDeniedException(userEntity.getUserName());
+                }
+                if (!StringUtils.isEmpty(newPassword)) {
+                    userEntity.setPassword(passwordEncoder.encode(newPassword));
+                } else {
+                    userEntity.setPassword(loaded.getPassword());
+                }
                 return repository.save(userEntity);
             } catch (DuplicateKeyException e) {
                 throw new UserDuplicateException(userEntity, e);
